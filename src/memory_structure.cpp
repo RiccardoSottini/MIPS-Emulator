@@ -1,10 +1,11 @@
 #include "def.h"
 
-MemoryStructure::MemoryStructure(Format format, std::string opcode, std::string funct, std::vector<std::string> parametersOrder) {
+MemoryStructure::MemoryStructure(Format format, std::string opcode, std::string funct, std::vector<std::string> parametersOrder, std::function<void(ExecutionScope*, std::vector<std::string>)> instructionFunction) {
     this->format = format;
     this->opcode = opcode;
     this->funct = funct;
     this->parametersOrder = parametersOrder;
+    this->instructionFunction = instructionFunction;
 }
 
 std::string MemoryStructure::getOpcode() const {
@@ -21,4 +22,8 @@ enum Format MemoryStructure::getFormat() const {
 
 std::vector<std::string> MemoryStructure::getParametersOrder() const {
     return this->parametersOrder;
+}
+
+void MemoryStructure::executeFunction(ExecutionScope* executionScope, std::vector<std::string> funcParams) const {
+    this->instructionFunction(executionScope, funcParams);
 }
