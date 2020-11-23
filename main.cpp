@@ -11,7 +11,7 @@ int main() {
         "addi $t0, $zero, 10",
         "Loop:",
         "beq $s0, $t0, Done",
-        "add $s1, $s1, $s1",
+        "sll $s1, $s1, 1",
         "addi $s0, $s0, 1",
         "j Loop",
         "Done:"

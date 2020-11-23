@@ -17,27 +17,30 @@ ExecutionScope::ExecutionScope(std::vector<std::string> instructions) {
 void ExecutionScope::executeScope() {
     while(!this->isFinished()) {
         Instruction* instructionScope = this->getInstruction(this->PC);
-        instructionScope->executeInstruction(this);
+        instructionScope->calculateMemory();
+        instructionScope->executeInstruction();
 
-
+        std::cout << "Instruction " << instructionScope->getName() << ": " << std::endl;
+        instructionScope->printMemory();
+        std::cout << instructionScope->getBinary() << std::endl << std::endl;
     }
 }
 
 void ExecutionScope::setRegisterValue(std::string regPosition, std::string value) {
-    if(value.length() < 32) {
-        this->memoryRegisters[regPosition] = std::string(32 - value.length(), '0') + value;
-    } else {
-        this->memoryRegisters[regPosition] = value;
-    }
+    this->memoryRegisters[regPosition] = formatBinary(value, 32);
 }
 
 void ExecutionScope::setInstruction(std::string address, std::string instruction) {
-    Instruction* instructionScope = new Instruction(instruction);
+    Instruction* instructionScope = new Instruction(instruction, this);
     this->memoryInstructions[address] = instructionScope;
 
     if(instructionScope->getStatementType() == LABEL) {
-        memoryLabels[instructionScope->getName()] = address;
+        this->setLabelAddress(instructionScope->getName(), address);
     }
+}
+
+void ExecutionScope::setLabelAddress(std::string label, std::string address) {
+    this->memoryLabels[label] = address;
 }
 
 std::string ExecutionScope::getRegisterValue(std::string regPosition) {
@@ -60,6 +63,16 @@ Instruction* ExecutionScope::getInstruction(std::string address) {
     }
 }
 
+std::string ExecutionScope::getLabelAddress(std::string label) {
+    auto posLabel = memoryLabels.find(label);
+
+    if(posLabel != memoryLabels.end()) {
+        return posLabel->second;
+    } else {
+        return "";
+    }
+}
+
 void ExecutionScope::incPC() {
     int decimalPC = std::stoi(this->PC, nullptr, 2);
     int newPC = decimalPC + 4;
@@ -68,7 +81,7 @@ void ExecutionScope::incPC() {
 }
 
 void ExecutionScope::setPC(std::string newPC) {
-    this->PC = newPC;
+    this->PC = formatBinary(newPC, 8);
 }
 
 void ExecutionScope::jumpLabel(std::string label) {

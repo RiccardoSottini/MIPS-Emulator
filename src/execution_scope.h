@@ -12,9 +12,11 @@ class ExecutionScope {
 
         void setRegisterValue(std::string regPosition, std::string value);
         void setInstruction(std::string address, std::string instruction);
+        void setLabelAddress(std::string label, std::string address);
 
         std::string getRegisterValue(std::string regPosition);
         Instruction* getInstruction(std::string address);
+        std::string getLabelAddress(std::string label);
 
         void incPC();
         void setPC(std::string newPC);
