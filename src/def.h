@@ -10,6 +10,11 @@
 #include <bitset>
 #include <functional>
 
+enum InputType {
+    INSTRUCTION_VALUE,
+    BINARY_VALUE
+};
+
 enum Format {
     R_FORMAT,
     I_FORMAT,
@@ -86,40 +91,63 @@ const std::map<std::string, MemoryStructure> instructionFormats = {
     { "addi",   MemoryStructure(I_FORMAT, "001000", "",         {"rt", "rs", "imm"},    ADDI_function)  },
     { "addiu",  MemoryStructure(I_FORMAT, "001001", "",         {"rt", "rs", "imm"},    ADDIU_function) },
     { "addu",   MemoryStructure(R_FORMAT, "000000", "100001",   {"rd", "rs", "rt"},     ADDU_function)  },
-
     { "and",    MemoryStructure(R_FORMAT, "000000", "100100",   {"rd", "rs", "rt"},     AND_function)   },
     { "andi",   MemoryStructure(I_FORMAT, "001100", "",         {"rt", "rs", "imm"},    ANDI_function)  },
-
     { "beq",    MemoryStructure(I_FORMAT, "000100", "",         {"rs", "rt", "imm"},    BEQ_function)   },
     { "bne",    MemoryStructure(I_FORMAT, "000101", "",         {"rs", "rt", "imm"},    BNE_function)   },
-
     { "j",      MemoryStructure(J_FORMAT, "000010", "",         {"addr"},               J_function)     },
     { "jal",    MemoryStructure(J_FORMAT, "000011", "",         {"addr"},               JAL_function)   },
     { "jr",     MemoryStructure(R_FORMAT, "000000", "001000",   {"rs"},                 JR_function)    },
-
     { "lbu",    MemoryStructure(I_FORMAT, "100100", "",         {"rt", "imm", "rs"},    LBU_function)   },
     { "lhu",    MemoryStructure(I_FORMAT, "100101", "",         {"rt", "imm", "rs"},    LHU_function)   },
     { "lui",    MemoryStructure(I_FORMAT, "001111", "",         {"rt", "imm"},          LUI_function)   },
     { "lw",     MemoryStructure(I_FORMAT, "100011", "",         {"rt", "imm", "rs"},    LW_function)    },
-
     { "nor",    MemoryStructure(R_FORMAT, "000000", "100111",   {"rd", "rs", "rt"},     NOR_function)   },
     { "or",     MemoryStructure(R_FORMAT, "000000", "100101",   {"rd", "rs", "rt"},     OR_function)    },
     { "ori",    MemoryStructure(I_FORMAT, "001101", "",         {"rt", "rs", "imm"},    ORI_function)   },
-
     { "slt",    MemoryStructure(R_FORMAT, "000000", "101010",   {"rd", "rs", "rt"},     SLT_function)   },
     { "slti",   MemoryStructure(I_FORMAT, "001010", "",         {"rt", "rs", "imm"},    SLTI_function)  },
     { "sltiu",  MemoryStructure(I_FORMAT, "001011", "",         {"rt", "rs", "imm"},    SLTIU_function) },
     { "sltu",   MemoryStructure(R_FORMAT, "000000", "101011",   {"rd", "rs", "rt"},     SLTU_function)  },
-
     { "sll",    MemoryStructure(R_FORMAT, "000000", "000000",   {"rd", "rt", "shamt"},  SLL_function)   },
     { "srl",    MemoryStructure(R_FORMAT, "000000", "000010",   {"rd", "rt", "shamt"},  SRL_function)   },
-
     { "sb",     MemoryStructure(I_FORMAT, "101000", "",         {"rt", "imm", "rs"},    SB_function)    },
     { "sh",     MemoryStructure(I_FORMAT, "101001", "",         {"rt", "imm", "rs"},    SH_function)    },
     { "sw",     MemoryStructure(I_FORMAT, "101011", "",         {"rt", "imm", "rs"},    SW_function)    },
-
     { "sub",    MemoryStructure(R_FORMAT, "000000", "100010",   {"rd", "rs", "rt"},     SUB_function)   },
     { "subu",   MemoryStructure(R_FORMAT, "000000", "100011",   {"rd", "rs", "rt"},     SUBU_function)  }
+};
+
+const std::map<std::pair<std::string, std::string>, std::string> instructionPointers {
+    { { "000000", "100000" },   "add"   },
+    { { "001000", ""       },   "addi"  },
+    { { "001001", ""       },   "addiu" },
+    { { "000000", "100001" },   "addu"  },
+    { { "000000", "100100" },   "and"   },
+    { { "001100", ""       },   "andi"  },
+    { { "000100", ""       },   "beq"   },
+    { { "000101", ""       },   "bne"   },
+    { { "000010", ""       },   "j"     },
+    { { "000011", ""       },   "jal"   },
+    { { "000000", "001000" },   "jr"    },
+    { { "100100", ""       },   "lbu"   },
+    { { "100101", ""       },   "lhu"   },
+    { { "001111", ""       },   "lui"   },
+    { { "100011", ""       },   "lw"    },
+    { { "000000", "100111" },   "nor"   },
+    { { "000000", "100101" },   "or"    },
+    { { "001101", ""       },   "ori"   },
+    { { "000000", "101010" },   "slt"   },
+    { { "001010", ""       },   "slti"  },
+    { { "001011", ""       },   "sltiu" },
+    { { "000000", "101011" },   "sltu"  },
+    { { "000000", "000000" },   "sll"   },
+    { { "000000", "000010" },   "srl"   },
+    { { "101000", ""       },   "sb"    },
+    { { "101001", ""       },   "sh"    },
+    { { "101011", ""       },   "sw"    },
+    { { "000000", "100010" },   "sub"   },
+    { { "000000", "100011" },   "subu"  }
 };
 
 const std::map<std::string, int> fieldSizes = {
@@ -168,8 +196,15 @@ const std::map<std::string, std::string> registerFormats = {
     { "$ra",    "11111" },
 };
 
-#include "memory_structure.h"
-#include "instruction.h"
-#include "execution_scope.h"
+const std::vector<std::string> registerPointers {
+    "$zero", "$at",
+    "$v0", "$v1",
+    "$a0", "$a1", "$a2", "$a3",
+    "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7",
+    "$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7",
+    "$t8", "$t9",
+    "$k0", "$k1",
+    "$gp", "$sp", "$fp", "$ra"
+};
 
 #endif

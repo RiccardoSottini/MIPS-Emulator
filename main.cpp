@@ -4,9 +4,15 @@
 #include "src/def.h"
 
 int main() {
-    /* Example */
+    /* Instruction Example */
+    std::string binary = "00100001001010010001001110001000";
+    Instruction* secondInstruction = new Instruction(binary, BINARY_VALUE);
+    secondInstruction->calculateInstruction();
+    std::cout << "INSTRUCTION BINARY PARSER: " << secondInstruction->getInstruction() << std::endl << std::endl;
+
+    /* Execution Scope Example */
     std::vector<std::string> instructions = {
-        "addi $t1, $t1, 200",
+        "addi $t1, $t1, 5000",
         "addi $t2, $t2, 12",
         "sb $t1, 4($t2)",
 
@@ -25,6 +31,16 @@ int main() {
 
     ExecutionScope *executionScope = new ExecutionScope(instructions);
     executionScope->executeScope();
+
+    std::cout << "Instructions:" << std::endl;
+    executionScope->printInstructions(INSTRUCTION_VALUE);
+
+    std::cout << std::endl << "Instructions (Binary):" << std::endl;
+    executionScope->printInstructions(BINARY_VALUE);
+
+    std::cout << std::endl << "Memory (Binary):" << std::endl;
     executionScope->printMemory();
+
+    std::cout << std::endl << "Registers (Binary):" << std::endl;
     executionScope->printRegisters();
 }

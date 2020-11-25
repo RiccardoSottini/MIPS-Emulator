@@ -8,27 +8,30 @@ class MemoryStructure;
 
 class Instruction {
     public:
-        Instruction(std::string instruction);
-        Instruction(std::string instruction, ExecutionScope* executionScope);
+        Instruction(std::string value, InputType inputType);
+        Instruction(std::string value, InputType inputType, ExecutionScope* executionScope);
 
         std::string getName();
-        std::string getParameter(const int index);
         std::string getField(std::string field);
-        std::string getBinary();
+        std::string getParameter(const int index);
         enum StatementType getStatementType();
+        std::string getBinary();
+        std::string getInstruction();
 
-        void printMemory();
-        void printField(std::string);
-        void printFields(std::vector<std::string> fields);
+        void setField(std::string fieldName, std::string fieldValue);
+        void setParameter(const int index, std::string parameterValue);
 
-        void calculateMemory();
+        void parseInstruction(std::string instruction);
+        void parseBinary(std::string binary);
+
+        void calculateBinary();
+        void calculateInstruction();
         std::string calculateField(std::string parameterName, std::string parameterValue);
+        std::string calculateParameter(std::string fieldName, std::string fieldValue);
 
         void executeInstruction();
 
     private:
-        void parseInstruction(std::string instruction);
-
         std::string name;
         std::vector<std::string> parameters;
 

@@ -18,19 +18,33 @@ ExecutionScope::ExecutionScope(std::vector<std::string> instructions) {
 void ExecutionScope::executeScope() {
     while(!this->isFinished()) {
         Instruction* instructionScope = this->getInstruction(this->PC);
-        instructionScope->calculateMemory();
+        instructionScope->calculateBinary();
         instructionScope->executeInstruction();
+    }
+}
 
-        std::cout << "Instruction " << instructionScope->getName() << ": " << std::endl;
-        instructionScope->printMemory();
-        std::cout << instructionScope->getBinary() << std::endl << std::endl;
+void ExecutionScope::printInstructions(enum InputType inputType) {
+    int insPosition = 0;
+    Instruction* instructionScope = this->getInstruction(std::bitset<32>(insPosition).to_string());
+
+    while(instructionScope != nullptr) {
+        std::string memAddress = std::bitset<32>(insPosition).to_string();
+
+        if(inputType == INSTRUCTION_VALUE) {
+            std::cout << toHex(memAddress, 8) << ":    " << instructionScope->getInstruction() << std::endl;
+        } else if(inputType == BINARY_VALUE) {
+            std::cout << toHex(memAddress, 8) << ":    " << instructionScope->getBinary() << std::endl;
+        }
+
+        insPosition += 4;
+        instructionScope = this->getInstruction(std::bitset<32>(insPosition).to_string());
     }
 }
 
 void ExecutionScope::printRegisters() {
     for(int regIndex = 0; regIndex < 32; regIndex++) {
         std::string regPosition = std::bitset<5>(regIndex).to_string();
-        std::cout << "$" << std::setw(2) << std::left << regIndex << " - " << regPosition << ": " << this->getRegisterValue(regPosition) << std::endl;
+        std::cout << std::setw(5) << std::left << registerPointers[regIndex] << " (" << regPosition << "): " << this->getRegisterValue(regPosition) << std::endl;
     }
 }
 
@@ -39,7 +53,7 @@ void ExecutionScope::printMemory() {
     int endPosition = toDecimal(this->memPosition);
 
     while(toDecimal(memAddress) < endPosition) {
-        std::cout << toHex(memAddress, 8) << ":  " << this->getWordValue(memAddress) << std::endl;
+        std::cout << toHex(memAddress, 8) << ":    " << this->getWordValue(memAddress) << std::endl;
         memAddress = addBinary(memAddress, "100");
     }
 }
@@ -105,7 +119,7 @@ void ExecutionScope::setWordValue(std::string wordAddress, std::string byteOffse
 void ExecutionScope::setInstruction(std::string insAddress, std::string instruction) {
     insAddress = formatBinary(insAddress, 32);
 
-    Instruction* instructionScope = new Instruction(instruction, this);
+    Instruction* instructionScope = new Instruction(instruction, INSTRUCTION_VALUE, this);
     this->listInstructions[insAddress] = instructionScope;
 
     if(instructionScope->getStatementType() == LABEL) {

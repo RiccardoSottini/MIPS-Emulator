@@ -9,6 +9,7 @@ class ExecutionScope {
 
         void executeScope();
 
+        void printInstructions(enum InputType inputType);
         void printRegisters();
         void printMemory();
 

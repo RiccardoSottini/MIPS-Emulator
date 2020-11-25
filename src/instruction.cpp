@@ -1,11 +1,19 @@
 #include "def.h"
 
-Instruction::Instruction(std::string instruction) {
-    this->parseInstruction(instruction);
+Instruction::Instruction(std::string value, InputType inputType) {
+    if(inputType == INSTRUCTION_VALUE) {
+        parseInstruction(value);
+    } else if(inputType == BINARY_VALUE) {
+        parseBinary(value);
+    }
 }
 
-Instruction::Instruction(std::string instruction, ExecutionScope* executionScope) {
-    this->parseInstruction(instruction);
+Instruction::Instruction(std::string value, InputType inputType, ExecutionScope* executionScope) {
+    if(inputType == INSTRUCTION_VALUE) {
+        parseInstruction(value);
+    } else if(inputType == BINARY_VALUE) {
+        parseBinary(value);
+    }
 
     this->executionScope = executionScope;
 }
@@ -41,57 +49,123 @@ void Instruction::parseInstruction(std::string instruction) {
         this->statementType = LABEL;
         this->name.pop_back();
     }
+
+    auto posInstruction = instructionFormats.find(this->name);
+    if(posInstruction != instructionFormats.end()) {
+        memoryStructure = &posInstruction->second;
+    }
 }
 
-void Instruction::calculateMemory() {
-    auto pos = instructionFormats.find(this->name);
-    if(pos != instructionFormats.end()) {
-        memoryStructure = &pos->second;
+void Instruction::parseBinary(std::string binary) {
+    std::string nameInstruction = "";
+    std::string opcode = binary.substr(0, 6);
+    std::string funct = "";
+
+    if(opcode != std::string(6, 'x')) {
+        this->statementType = INSTRUCTION;
+
+        if(toDecimal(opcode) == 0) {
+            funct = binary.substr(26, 6);
+        }
+
+        auto pos = instructionPointers.find({opcode, funct});
+        if(pos != instructionPointers.end()) {
+            nameInstruction = pos->second;
+        }
+
+        auto posInstruction = instructionFormats.find(nameInstruction);
+        if(posInstruction != instructionFormats.end()) {
+            memoryStructure = &posInstruction->second;
+
+            setField("opcode", opcode);
+
+            if(memoryStructure->getFormat() == R_FORMAT) {
+                setField("rs", binary.substr(6, 5));
+                setField("rt", binary.substr(11, 5));
+                setField("rd", binary.substr(16, 5));
+                setField("shamt", binary.substr(21, 5));
+                setField("funct", funct);
+            } else if(memoryStructure->getFormat() == I_FORMAT) {
+                setField("rs", binary.substr(6, 5));
+                setField("rt", binary.substr(11, 5));
+                setField("imm", binary.substr(16, 16));
+            } else if(memoryStructure->getFormat() == J_FORMAT) {
+                setField("addr", binary.substr(6, 26));
+            }
+        }
+    } else {
+        this->statementType = LABEL;
+    }
+}
+
+void Instruction::calculateBinary() {
+    if(memoryStructure != nullptr) {
         std::vector<std::string> parametersOrder = memoryStructure->getParametersOrder();
 
-        memoryFields["opcode"] = memoryStructure->getOpcode();
+        setField("opcode", memoryStructure->getOpcode());
 
         if(memoryStructure->getFormat() == R_FORMAT) {
-            memoryFields["rs"] = "00000";
-            memoryFields["rt"] = "00000";
-            memoryFields["rd"] = "00000";
-            memoryFields["shamt"] = "00000";
-            memoryFields["funct"] = memoryStructure->getFunct();
+            setField("rs", "");
+            setField("rt", "");
+            setField("rd", "");
+            setField("shamt", "");
+            setField("funct", memoryStructure->getFunct());
         } else if(memoryStructure->getFormat() == I_FORMAT) {
-            memoryFields["rs"] = "00000";
-            memoryFields["rt"] = "00000";
-            memoryFields["imm"] = "0000000000000000";
+            setField("rs", "");
+            setField("rt", "");
+            setField("imm", "");
         } else if(memoryStructure->getFormat() == J_FORMAT) {
-            memoryFields["addr"] = "00000000000000000000000000";
+            setField("addr", "");
         }
 
         for(int indexP = 0; indexP < parametersOrder.size(); indexP++) {
-            std::string parameterValue = this->getParameter(indexP);
             std::string parameterName = parametersOrder[indexP];
+            std::string parameterValue = getParameter(indexP);
 
-            memoryFields[parameterName] = this->calculateField(parameterName, parameterValue);
+            setField(parameterName, calculateField(parameterName, parameterValue));
         }
     } else {
-        if(this->statementType == INSTRUCTION) {
-            std::cout << "ERROR: Instruction " + this->name + " does not exist!";
+        if(getStatementType() == INSTRUCTION) {
+            std::cout << "ERROR: Instruction " + getName() + " does not exist!";
+        }
+    }
+}
+
+void Instruction::calculateInstruction() {
+    if(getStatementType() == INSTRUCTION) {
+        if(memoryStructure != nullptr) {
+            std::vector<std::string> parametersOrder = memoryStructure->getParametersOrder();
+
+            this->name = calculateParameter("opcode", getField("opcode"));
+
+            for(int indexP = 0; indexP < parametersOrder.size(); indexP++) {
+                std::string fieldName = parametersOrder[indexP];
+                std::string fieldValue = getField(fieldName);
+
+                setParameter(indexP, calculateParameter(fieldName, fieldValue));
+            }
+        } else {
+            if(getStatementType() == INSTRUCTION) {
+                std::cout << "ERROR: Instruction " + getName() + " does not exist!";
+            }
         }
     }
 }
 
 std::string Instruction::calculateField(std::string parameterName, std::string parameterValue) {
-    int bitsNumber = 0;
+    int fieldSize = 0;
     std::string binaryValue = "";
 
     auto posSize = fieldSizes.find(parameterName);
     if(posSize != fieldSizes.end()) {
-        bitsNumber = posSize->second;
+        fieldSize = posSize->second;
     }
 
     if(parameterValue[0] == '$') {
         auto pos = registerFormats.find(parameterValue);
         if(pos != registerFormats.end()) {
             std::string value = pos->second;
-            binaryValue = std::string(bitsNumber - value.length(), '0') + value;
+            binaryValue = std::string(fieldSize - value.length(), '0') + value;
         } else {
             std::cout << "ERROR: Register not valid!";
         }
@@ -110,14 +184,35 @@ std::string Instruction::calculateField(std::string parameterName, std::string p
             if(executionScope != nullptr) {
                 value = executionScope->getLabelAddress(parameterValue);
             } else {
-                value = std::string(bitsNumber, parameterName[0]);
+                value = std::string(fieldSize, parameterName[0]);
             }
         }
 
-        binaryValue = formatBinary(value, bitsNumber);
+        binaryValue = formatBinary(value, fieldSize);
     }
 
     return binaryValue;
+}
+
+std::string Instruction::calculateParameter(std::string fieldName, std::string fieldValue) {
+    if(fieldName == "opcode") {
+        std::string funct = memoryStructure->getFunct();
+
+        auto pos = instructionPointers.find({fieldValue, funct});
+        if(pos != instructionPointers.end()) {
+            return pos->second;
+        }
+    } else if(fieldName == "rs" || fieldName == "rt" || fieldName == "rd") {
+        int posRegister = toDecimal(fieldValue);
+
+        if(posRegister >= 0 && posRegister < 32) {
+            return registerPointers[posRegister];
+        }
+    } else if(fieldName == "shamt" || fieldName == "imm" || fieldName == "addr") {
+        return std::to_string(toDecimal(fieldValue));
+    }
+
+    return "";
 }
 
 std::string Instruction::getName() {
@@ -140,6 +235,10 @@ std::string Instruction::getField(std::string field) {
 
     return "";
 }
+
+enum StatementType Instruction::getStatementType() {
+    return this->statementType;
+};
 
 std::string Instruction::getBinary() {
     if(this->statementType == INSTRUCTION) {
@@ -165,37 +264,49 @@ std::string Instruction::getBinary() {
             return opcode + addr;
         }
     } else if(this->statementType == LABEL) {
-        return "";
+        return std::string(32, 'x');
     }
 }
 
-enum StatementType Instruction::getStatementType() {
-    return this->statementType;
-};
-
-void Instruction::printMemory() {
+std::string Instruction::getInstruction() {
     if(this->statementType == INSTRUCTION) {
-        if(memoryStructure->getFormat() == R_FORMAT) {
-            this->printFields({"opcode", "rs", "rt", "rd", "shamt", "funct"});
-        } else if(memoryStructure->getFormat() == I_FORMAT) {
-            this->printFields({"opcode", "rs", "rt", "imm"});
-        } else if(memoryStructure->getFormat() == J_FORMAT) {
-            this->printFields({"opcode", "addr"});
+        std::vector<std::string> parametersOrder = memoryStructure->getParametersOrder();
+        std::string instruction = getName() + " ";
+
+        if(memoryStructure->getFormat() == I_FORMAT && (parametersOrder.size() == 3 && parametersOrder[1] == "imm")) {
+            instruction = getParameter(0) + ", " + getParameter(1) + "(" + getParameter(2) + ")";
+        } else {
+            for(int paramIndex = 0; paramIndex < parametersOrder.size(); paramIndex++) {
+                instruction += getParameter(paramIndex);
+
+                if(paramIndex < parametersOrder.size() - 1) instruction += ", ";
+            }
+        }
+
+        return instruction;
+    } else if(this->statementType == LABEL) {
+        if(this->name.size()) {
+            return getName() + ": ";
+        } else {
+            return "LABEL (name not assigned): ";
         }
     }
 }
 
-void Instruction::printField(std::string field) {
-    std::string fieldValue = this->getField(field);
+void Instruction::setField(std::string fieldName, std::string fieldValue) {
+    auto posSize = fieldSizes.find(fieldName);
+    if(posSize != fieldSizes.end()) {
+        int fieldSize = posSize->second;
 
-    if(fieldValue != "") {
-        std::cout << field << ": " << fieldValue << std::endl;
+        this->memoryFields[fieldName] = formatBinary(fieldValue, fieldSize);
     }
 }
 
-void Instruction::printFields(std::vector<std::string> fields) {
-    for(int fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
-        this->printField(fields[fieldIndex]);
+void Instruction::setParameter(const int index, std::string parameterValue) {
+    if(index < this->parameters.size()) {
+        this->parameters[index] = parameterValue;
+    } else {
+        this->parameters.push_back(parameterValue);
     }
 }
 
