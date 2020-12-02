@@ -1,5 +1,11 @@
 #include "def.h"
 
+/**
+ * Instruction Constructor - Initializes the Instruction Object by parsing the Value passed as parameter
+ *
+ * @param value Value passed as Parameter that can be the Instruction or the Binary Value (specified by the Input Type)
+ * @param inputType Input Type that says what does Value contain (an Instruction or the Binary Value)
+ */
 Instruction::Instruction(std::string value, InputType inputType) {
     if(inputType == INSTRUCTION_VALUE) {
         parseInstruction(value);
@@ -8,6 +14,13 @@ Instruction::Instruction(std::string value, InputType inputType) {
     }
 }
 
+/**
+ * Instruction Constructor - Initializes the Instruction Object by parsing the Value passed as parameter and save the pointer to the Execution Scope
+ *
+ * @param value Value passed as Parameter that can be the Instruction or the Binary Value (specified by the Input Type)
+ * @param inputType Input Type that says what does Value contain (an Instruction or the Binary Value)
+ * @param executionScope Execution Scope pointer that holds the Execution informations of the MIPS Emulator
+ */
 Instruction::Instruction(std::string value, InputType inputType, ExecutionScope* executionScope) {
     if(inputType == INSTRUCTION_VALUE) {
         parseInstruction(value);
@@ -18,6 +31,11 @@ Instruction::Instruction(std::string value, InputType inputType, ExecutionScope*
     this->executionScope = executionScope;
 }
 
+/**
+ * Parse the Instruction and save its Parameters
+ *
+ * @param instruction Instruction to be parsed
+ */
 void Instruction::parseInstruction(std::string instruction) {
     std::string currentParameter = "";
     int parameterIndex = 0;
@@ -56,6 +74,11 @@ void Instruction::parseInstruction(std::string instruction) {
     }
 }
 
+/**
+ * Parse the Binary Value of an Instruction and save its Fields
+ *
+ * @param binary Binary Value to be parsed
+ */
 void Instruction::parseBinary(std::string binary) {
     std::string nameInstruction = "";
     std::string opcode = binary.substr(0, 6);
@@ -98,7 +121,12 @@ void Instruction::parseBinary(std::string binary) {
     }
 }
 
-void Instruction::calculateBinary() {
+/**
+ * Calculate the Binary Value starting from the Instruction Parameters
+ *
+ * @return Binary Value of the Instruction
+ */
+std::string Instruction::calculateBinary() {
     if(memoryStructure != nullptr) {
         std::vector<std::string> parametersOrder = memoryStructure->getParametersOrder();
 
@@ -129,9 +157,16 @@ void Instruction::calculateBinary() {
             std::cout << "ERROR: Instruction " + getName() + " does not exist!";
         }
     }
+
+    return this->getBinary();
 }
 
-void Instruction::calculateInstruction() {
+/**
+ * Calculate the Instruction starting from the Binary Value Fields
+ *
+ * @return Instruction's Value (String that contains the opcode and the parameters)
+ */
+std::string Instruction::calculateInstruction() {
     if(getStatementType() == INSTRUCTION) {
         if(memoryStructure != nullptr) {
             std::vector<std::string> parametersOrder = memoryStructure->getParametersOrder();
@@ -150,8 +185,17 @@ void Instruction::calculateInstruction() {
             }
         }
     }
+
+    return this->getInstruction();
 }
 
+/**
+ * Calculate a Field's Value starting from the Parameter's Name and the Parameter's Value
+ *
+ * @param parameterName Parameter's Name used to calculate the size of the Binary Value to be returned
+ * @param parameterValue Parameter's Value to be converted into its Binary Value
+ * @return Field's Binary Value calculated in base of the Parameter's Name and the Parameter's Value
+ */
 std::string Instruction::calculateField(std::string parameterName, std::string parameterValue) {
     int fieldSize = 0;
     std::string binaryValue = "";
@@ -172,7 +216,11 @@ std::string Instruction::calculateField(std::string parameterName, std::string p
     } else {
         std::string value = "";
 
-        if(isNumber(parameterValue)) {
+        if(isNumber(parameterValue) || isHex(parameterValue)) {
+            if(isHex(parameterValue)) {
+                parameterValue = std::to_string(toDecimal(parameterValue, HEX_FORMAT));
+            }
+
             if(parameterName == "shamt") {
                 value = std::bitset<5>(std::stoi(parameterValue)).to_string();
             } else if(parameterName == "imm") {
@@ -194,6 +242,13 @@ std::string Instruction::calculateField(std::string parameterName, std::string p
     return binaryValue;
 }
 
+/**
+ * Calculate a Parameter's Value starting from the Field's Name and the Field's Value
+ *
+ * @param fieldName Field's Name used to calculate the Parameter's Value
+ * @param fieldValue Field's Value that is in Binary to be converted into the Parameter's Value
+ * @return Parameter's Value calculated in base of the Field's Name and the Field's Value
+ */
 std::string Instruction::calculateParameter(std::string fieldName, std::string fieldValue) {
     if(fieldName == "opcode") {
         std::string funct = memoryStructure->getFunct();
@@ -208,17 +263,30 @@ std::string Instruction::calculateParameter(std::string fieldName, std::string f
         if(posRegister >= 0 && posRegister < 32) {
             return registerPointers[posRegister];
         }
-    } else if(fieldName == "shamt" || fieldName == "imm" || fieldName == "addr") {
+    } else if(fieldName == "shamt" || fieldName == "imm") {
         return std::to_string(toDecimal(fieldValue));
+    } else if(fieldName == "addr") {
+        return toHex(fieldValue, 8);
     }
 
     return "";
 }
 
+/**
+ * Get the Name of the Instruction
+ *
+ * @return Name of the Instruction
+ */
 std::string Instruction::getName() {
     return this->name;
 }
 
+/**
+ * Get the Parameter's Value in base of the Index
+ *
+ * @param index Index of the Parameter to get from the parameters array
+ * @return Parameters's Value at the index position of the parameters array
+ */
 std::string Instruction::getParameter(const int index) {
     if(index < this->parameters.size()) {
         return this->parameters[index];
@@ -227,6 +295,12 @@ std::string Instruction::getParameter(const int index) {
     return "";
 }
 
+/**
+ * Get the Field's Value in base of its name
+ *
+ * @param field Field's Name used to retrieve the Field's Value
+ * @return Field's Value using the Field's Name to retrieve it
+ */
 std::string Instruction::getField(std::string field) {
     auto pos = memoryFields.find(field);
     if(pos != memoryFields.end()) {
@@ -236,10 +310,20 @@ std::string Instruction::getField(std::string field) {
     return "";
 }
 
+/**
+ * Get the Statement's Type (it can be an Instruction or a Label)
+ *
+ * @return Statement's Type (INSTRUCTION / LABEL)
+ */
 enum StatementType Instruction::getStatementType() {
     return this->statementType;
 };
 
+/**
+ * Get the Instruction's Binary Value
+ *
+ * @return Binary Value of the Instruction
+ */
 std::string Instruction::getBinary() {
     if(this->statementType == INSTRUCTION) {
         std::string opcode = this->getField("opcode");
@@ -268,13 +352,18 @@ std::string Instruction::getBinary() {
     }
 }
 
+/**
+ * Get the Instruction's Value
+ *
+ * @return Instruction's Value (String that contains the opcode and the parameters)
+ */
 std::string Instruction::getInstruction() {
     if(this->statementType == INSTRUCTION) {
         std::vector<std::string> parametersOrder = memoryStructure->getParametersOrder();
         std::string instruction = getName() + " ";
 
         if(memoryStructure->getFormat() == I_FORMAT && (parametersOrder.size() == 3 && parametersOrder[1] == "imm")) {
-            instruction = getParameter(0) + ", " + getParameter(1) + "(" + getParameter(2) + ")";
+            instruction += getParameter(0) + ", " + getParameter(1) + "(" + getParameter(2) + ")";
         } else {
             for(int paramIndex = 0; paramIndex < parametersOrder.size(); paramIndex++) {
                 instruction += getParameter(paramIndex);
@@ -293,6 +382,12 @@ std::string Instruction::getInstruction() {
     }
 }
 
+/**
+ * Set Field's Value in base of the Field's Name
+ *
+ * @param fieldName Field's Name used to select the correct Field
+ * @param fieldValue Field's Value that is set to the selected Field
+ */
 void Instruction::setField(std::string fieldName, std::string fieldValue) {
     auto posSize = fieldSizes.find(fieldName);
     if(posSize != fieldSizes.end()) {
@@ -302,6 +397,12 @@ void Instruction::setField(std::string fieldName, std::string fieldValue) {
     }
 }
 
+/**
+ * Set Parameter's Value in base of the Parameter's Index
+ *
+ * @param index Parameter's Index used to select the correct Parameter in the parameters array
+ * @param parameterValue Parameter's Value that is set to the selected Parameter
+ */
 void Instruction::setParameter(const int index, std::string parameterValue) {
     if(index < this->parameters.size()) {
         this->parameters[index] = parameterValue;
@@ -310,6 +411,9 @@ void Instruction::setParameter(const int index, std::string parameterValue) {
     }
 }
 
+/**
+ * Execute the Instruction running the Instruction's pointed function and modify the status of the Execution Scope
+ */
 void Instruction::executeInstruction() {
     if(this->executionScope != nullptr) {
         if(this->statementType == INSTRUCTION) {

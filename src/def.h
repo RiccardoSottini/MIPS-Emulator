@@ -10,20 +10,49 @@
 #include <bitset>
 #include <functional>
 
+/**
+ * Data Format
+ */
+enum DataFormat {
+    DEC_FORMAT,     ///< Decimal Format
+    BIN_FORMAT,     ///< Binary Format
+    HEX_FORMAT      ///< Hexadecimal Format
+};
+
+/**
+ * Type of Input used to construct the Instruction
+ */
 enum InputType {
-    INSTRUCTION_VALUE,
-    BINARY_VALUE
+    INSTRUCTION_VALUE,  ///< Instruction Value
+    BINARY_VALUE        ///< Binary Value
 };
 
+/**
+ * Instruction's Format
+ */
 enum Format {
-    R_FORMAT,
-    I_FORMAT,
-    J_FORMAT
+    R_FORMAT,   ///< Instruction R-Format (opcode - rs - rt - rd - shamt - funct)
+    I_FORMAT,   ///< Instruction I-Format (opcode - rs - rt - immediate)
+    J_FORMAT    ///< Instruction J-Format (opcode - address)
 };
 
+/**
+ * Statement's Type
+ */
 enum StatementType {
-    INSTRUCTION,
-    LABEL
+    INSTRUCTION,    ///< Definition of an Instruction
+    LABEL           ///< Definition of a Label
+};
+
+/**
+ * Addressing Type
+ */
+enum AddressingType {
+    IMMEDIATE_ADDRESSING,       ///< Immediate Addressing
+    REGISTER_ADDRESSING,        ///< Register Addressing
+    BASE_ADDRESSING,            ///< Base Addressing
+    PC_RELATIVE_ADDRESSING,     ///< PC-Relative Addressing
+    PSEUDO_DIRECT_ADDRESSING    ///< Pseudo-Direct Addressing
 };
 
 #include "memory_structure.h"
@@ -31,8 +60,11 @@ enum StatementType {
 #include "execution_scope.h"
 
 bool isNumber(std::string s);
+bool isHex(std::string hexValue);
 
 int toDecimal(std::string binaryValue);
+int toDecimal(std::string inputValue, enum DataFormat inputFormat);
+std::string toBinary(const int decimalValue);
 std::string toHex(std::string binaryValue);
 std::string toHex(std::string binaryValue, const int hexSize);
 
@@ -86,6 +118,11 @@ void SW_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
 void SUB_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 void SUBU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
+/**
+ * Match the Instruction's Name with the Memory Structure (that contains structural informations about the Instruction)
+ *
+ * @hideinitializer
+ */
 const std::map<std::string, MemoryStructure> instructionFormats = {
     { "add",    MemoryStructure(R_FORMAT, "000000", "100000",   {"rd", "rs", "rt"},     ADD_function)   },
     { "addi",   MemoryStructure(I_FORMAT, "001000", "",         {"rt", "rs", "imm"},    ADDI_function)  },
@@ -118,6 +155,11 @@ const std::map<std::string, MemoryStructure> instructionFormats = {
     { "subu",   MemoryStructure(R_FORMAT, "000000", "100011",   {"rd", "rs", "rt"},     SUBU_function)  }
 };
 
+/**
+ * Match the Opcode / Funct with the Name of the Instruction
+ *
+ * @hideinitializer
+ */
 const std::map<std::pair<std::string, std::string>, std::string> instructionPointers {
     { { "000000", "100000" },   "add"   },
     { { "001000", ""       },   "addi"  },
@@ -150,6 +192,11 @@ const std::map<std::pair<std::string, std::string>, std::string> instructionPoin
     { { "000000", "100011" },   "subu"  }
 };
 
+/**
+ * Size of the Instruction's Fields
+ *
+ * @hideinitializer
+ */
 const std::map<std::string, int> fieldSizes = {
     { "opcode", 6 },
     { "rs",     5 },
@@ -161,6 +208,11 @@ const std::map<std::string, int> fieldSizes = {
     { "addr",   26 },
 };
 
+/**
+ * Register's binary value
+ *
+ * @hideinitializer
+ */
 const std::map<std::string, std::string> registerFormats = {
     { "$zero",  "00000" },
     { "$at",    "00001" },
@@ -196,6 +248,11 @@ const std::map<std::string, std::string> registerFormats = {
     { "$ra",    "11111" },
 };
 
+/**
+ * Register's text value
+ *
+ * @hideinitializer
+ */
 const std::vector<std::string> registerPointers {
     "$zero", "$at",
     "$v0", "$v1",
@@ -206,5 +263,10 @@ const std::vector<std::string> registerPointers {
     "$k0", "$k1",
     "$gp", "$sp", "$fp", "$ra"
 };
+
+/**
+ * Initial value of the Program Counter
+ */
+const std::string startPC = formatBinary("10000000000000000000000", 32);
 
 #endif

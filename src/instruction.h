@@ -24,8 +24,8 @@ class Instruction {
         void parseInstruction(std::string instruction);
         void parseBinary(std::string binary);
 
-        void calculateBinary();
-        void calculateInstruction();
+        std::string calculateBinary();
+        std::string calculateInstruction();
         std::string calculateField(std::string parameterName, std::string parameterValue);
         std::string calculateParameter(std::string fieldName, std::string fieldValue);
 

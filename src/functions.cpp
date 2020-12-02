@@ -1,5 +1,11 @@
 #include "def.h"
 
+/**
+ * Check if the String contains a Number
+ *
+ * @param s Text that has to be evaluated
+ * @return True if the String contains a Number / False if it does not
+ */
 bool isNumber(std::string s) {
     for(unsigned int i = 0; i < s.length(); i++)
         if(std::isdigit(s[i]) == false)
@@ -8,11 +14,67 @@ bool isNumber(std::string s) {
     return true;
 }
 
+/**
+ * Check if the String contains an Hexadecimal Value
+ *
+ * @param hexValue Text that has to be evaluated
+ * @return True if the String contains an Hexadecimal Value / False if it does not
+ */
+bool isHex(std::string hexValue) {
+    return hexValue.size() >= 2 && hexValue[0] == '0' && hexValue[1] == 'x';
+}
 
+/**
+ * Convert a Binary Value into its Decimal Value
+ *
+ * @param binaryValue Binary Value to be converted
+ * @return Decimal Value of the Binary Value converted
+ */
 int toDecimal(std::string binaryValue) {
     return std::stoi(binaryValue, nullptr, 2);
 }
 
+/**
+ * Convert a String that can be a Binary or Hexadecimal Value into its Decimal Value
+ *
+ * @param inputValue Binary or Hexadecimal Value to be converted
+ * @param inputFormat Format used for the value gave as input
+ * @return Decimal Value of the Binary or Hexadecimal Value converted
+ */
+int toDecimal(std::string inputValue, enum DataFormat inputFormat) {
+    if(inputFormat == BIN_FORMAT) {
+        return toDecimal(inputValue);
+    } else if(inputFormat == HEX_FORMAT) {
+        int decimalValue;
+        std::stringstream res;
+
+        if(isHex(inputValue)) {
+            inputValue.erase(0, 2);
+        }
+
+        res << std::hex << inputValue;
+        res >> decimalValue;
+
+        return decimalValue;
+    }
+}
+
+/**
+ * Convert a Decimal Value into its Binary Value
+ *
+ * @param decimalValue Decimal Value to be converted
+ * @return Binary Value of the Decimal Value converted
+ */
+std::string toBinary(const int decimalValue) {
+    return std::bitset<32>(decimalValue).to_string();
+}
+
+/**
+ * Convert a Binary Value into its Hexadecimal Value
+ *
+ * @param binaryValue Binary Value to be converted
+ * @return Hexadecimal Value of the Binary Value converted
+ */
 std::string toHex(std::string binaryValue) {
     std::stringstream res;
     res << std::hex << std::uppercase << std::bitset<32>(binaryValue).to_ulong();
@@ -20,13 +82,26 @@ std::string toHex(std::string binaryValue) {
     return "0x" + res.str();
 }
 
+/**
+ * Convert a Binary Value into its Hexadecimal Value with a Fixed Size
+ *
+ * @param binaryValue Binary Value to be converted
+ * @param hexSize Size of the Hexadecimal Value to be returned
+ * @return Hexadecimal Value of the Binary Value converted
+ */
 std::string toHex(std::string binaryValue, const int hexSize) {
     std::string hexValue = toHex(binaryValue);
 
     return formatHex(hexValue, hexSize);
 }
 
-
+/**
+ * Transform a Binary Value and make it to have a Fixed Length specified by the Size parameter
+ *
+ * @param binaryValue Binary Value to be transformed in the version with the Fixed Length
+ * @param binarySize Length of the Binary Value to be returned
+ * @return The Binary Value transformed to have the Fixed Length specified by the Size parameter
+ */
 std::string formatBinary(std::string binaryValue, const int binarySize) {
     if(binarySize > (const) binaryValue.length()) {
         return std::string(binarySize - binaryValue.length(), '0') + binaryValue;
@@ -37,8 +112,15 @@ std::string formatBinary(std::string binaryValue, const int binarySize) {
     return binaryValue;
 }
 
+/**
+ * Transform an Hexadecimal Value and make it to have a Fixed Length specified by the Size parameter
+ *
+ * @param hexValue Hexadecimal Value to be transformed in the version with the Fixed Length
+ * @param hexSize Length of the Hexadecimal Value to be returned
+ * @return The Hexadecimal Value transformed to have the Fixed Length specified by the Size parameter
+ */
 std::string formatHex(std::string hexValue, const int hexSize) {
-    if(hexValue.size() >= 2 && hexValue[0] == '0' && hexValue[1] == 'x') {
+    if(isHex(hexValue)) {
         hexValue.erase(0, 2);
     }
 
@@ -51,7 +133,13 @@ std::string formatHex(std::string hexValue, const int hexSize) {
     return "0x" + hexValue;
 }
 
-
+/**
+ * ADD two Binary Values
+ *
+ * @param binaryA First Binary Value
+ * @param binaryB Second Binary Value
+ * @return Sum between the two Binary Values
+ */
 std::string addBinary(std::string binaryA, std::string binaryB) {
     int decimalA = std::stoi(binaryA, nullptr, 2);
     int decimalB = std::stoi(binaryB, nullptr, 2);
@@ -59,41 +147,13 @@ std::string addBinary(std::string binaryA, std::string binaryB) {
     return std::bitset<32>(decimalA + decimalB).to_string();
 }
 
-std::string andBinary(std::string binaryA, std::string binaryB) {
-    int decimalA = std::stoi(binaryA, nullptr, 2);
-    int decimalB = std::stoi(binaryB, nullptr, 2);
-
-    return std::bitset<32>(decimalA & decimalB).to_string();
-}
-
-std::string norBinary(std::string binaryA, std::string binaryB) {
-    int decimalA = std::stoi(binaryA, nullptr, 2);
-    int decimalB = std::stoi(binaryB, nullptr, 2);
-
-    return std::bitset<32>(~(decimalA | decimalB)).to_string();
-}
-
-std::string orBinary(std::string binaryA, std::string binaryB) {
-    int decimalA = std::stoi(binaryA, nullptr, 2);
-    int decimalB = std::stoi(binaryB, nullptr, 2);
-
-    return std::bitset<32>(decimalA | decimalB).to_string();
-}
-
-std::string shiftLeftBinary(std::string binaryValue, std::string binaryShift) {
-    int decimalValue = std::stoi(binaryValue, nullptr, 2);
-    int decimalShift = std::stoi(binaryShift, nullptr, 2);
-
-    return std::bitset<32>(decimalValue << decimalShift).to_string();
-}
-
-std::string shiftRightBinary(std::string binaryValue, std::string binaryShift) {
-    int decimalValue = std::stoi(binaryValue, nullptr, 2);
-    int decimalShift = std::stoi(binaryShift, nullptr, 2);
-
-    return std::bitset<32>(decimalValue >> decimalShift).to_string();
-}
-
+/**
+ * SUB two Binary Values
+ *
+ * @param binaryA First Binary Value
+ * @param binaryB Second Binary Value
+ * @return Sum between the two Binary Values
+ */
 std::string subBinary(std::string binaryA, std::string binaryB) {
     int decimalA = std::stoi(binaryA, nullptr, 2);
     int decimalB = std::stoi(binaryB, nullptr, 2);
@@ -101,7 +161,82 @@ std::string subBinary(std::string binaryA, std::string binaryB) {
     return std::bitset<32>(decimalA - decimalB).to_string();
 }
 
+/**
+ * AND Logical Operation between two Binary Values
+ *
+ * @param binaryA First Binary Value
+ * @param binaryB Second Binary Value
+ * @return Result of the AND Logical Operation between the two Binary Values
+ */
+std::string andBinary(std::string binaryA, std::string binaryB) {
+    int decimalA = std::stoi(binaryA, nullptr, 2);
+    int decimalB = std::stoi(binaryB, nullptr, 2);
 
+    return std::bitset<32>(decimalA & decimalB).to_string();
+}
+
+/**
+ * NOR Logical Operation between two Binary Values
+ *
+ * @param binaryA First Binary Value
+ * @param binaryB Second Binary Value
+ * @return Result of the NOR Logical Operation between the two Binary Values
+ */
+std::string norBinary(std::string binaryA, std::string binaryB) {
+    int decimalA = std::stoi(binaryA, nullptr, 2);
+    int decimalB = std::stoi(binaryB, nullptr, 2);
+
+    return std::bitset<32>(~(decimalA | decimalB)).to_string();
+}
+
+/**
+ * OR Logical Operation between two Binary Values
+ *
+ * @param binaryA First Binary Value
+ * @param binaryB Second Binary Value
+ * @return Result of the OR Logical Operation between the two Binary Values
+ */
+std::string orBinary(std::string binaryA, std::string binaryB) {
+    int decimalA = std::stoi(binaryA, nullptr, 2);
+    int decimalB = std::stoi(binaryB, nullptr, 2);
+
+    return std::bitset<32>(decimalA | decimalB).to_string();
+}
+
+/**
+ * Shift-Left Logical Operation on a Binary Value by a number of bit specified by the Shift parameter
+ *
+ * @param binaryValue Binary Value in which shift the Value by a specified number of bit
+ * @param binaryShift Specifies the number of bit to shift the Binary Value to the Left
+ * @return Result of the Shift Left Logical Operation on the Binary Value
+ */
+std::string shiftLeftBinary(std::string binaryValue, std::string binaryShift) {
+    int decimalValue = std::stoi(binaryValue, nullptr, 2);
+    int decimalShift = std::stoi(binaryShift, nullptr, 2);
+
+    return std::bitset<32>(decimalValue << decimalShift).to_string();
+}
+
+/**
+ * Shift-Right Logical Operation on a Binary Value by a number of bit specified by the Shift parameter
+ *
+ * @param binaryValue Binary Value in which shift the Value by a specified number of bit
+ * @param binaryShift Specifies the number of bit to shift the Binary Value to the Right
+ * @return Result of the Shift Right Logical Operation on the Binary Value
+ */
+std::string shiftRightBinary(std::string binaryValue, std::string binaryShift) {
+    int decimalValue = std::stoi(binaryValue, nullptr, 2);
+    int decimalShift = std::stoi(binaryShift, nullptr, 2);
+
+    return std::bitset<32>(decimalValue >> decimalShift).to_string();
+}
+
+/**
+ * ADD Instruction -> R[rd] = R[rs] + R[rt]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
 void ADD_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -112,6 +247,12 @@ void ADD_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
+/**
+ * ADDI Instruction -> R[rt] = R[rs] + SignExtImm
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, rs, imm)
+ */
 void ADDI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -122,6 +263,12 @@ void ADDI_function(ExecutionScope* executionScope, std::vector<std::string> func
     executionScope->incPC();
 }
 
+/**
+ * ADDIU Instruction -> R[rt] = R[rs] + SignExtImm
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, rs, imm)
+ */
 void ADDIU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -132,6 +279,12 @@ void ADDIU_function(ExecutionScope* executionScope, std::vector<std::string> fun
     executionScope->incPC();
 }
 
+/**
+ * ADDU Instruction -> R[rd] = R[rs] + R[rt]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
 void ADDU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -142,7 +295,12 @@ void ADDU_function(ExecutionScope* executionScope, std::vector<std::string> func
     executionScope->incPC();
 }
 
-
+/**
+ * AND Instruction -> R[rd] = R[rs] & R[rt]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
 void AND_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -153,6 +311,12 @@ void AND_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
+/**
+ * ANDI Instruction -> R[rt] = R[rs] & ZeroExtImm
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, rs, imm)
+ */
 void ANDI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -163,38 +327,60 @@ void ANDI_function(ExecutionScope* executionScope, std::vector<std::string> func
     executionScope->incPC();
 }
 
-
+/**
+ * BEQ Instruction -> if(R[rs] == R[rt]) { PC = PC + 4 + BranchAddr }
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rs, rt, imm)
+ */
 void BEQ_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rsValue = executionScope->getRegisterValue(funcParams[0]);
     std::string rtValue = executionScope->getRegisterValue(funcParams[1]);
     std::string immValue = funcParams[2];
 
     if(rsValue.compare(rtValue) == 0) {
-        executionScope->setPC(immValue);
+        executionScope->setPC(immValue, PC_RELATIVE_ADDRESSING);
     } else {
         executionScope->incPC();
     }
 }
 
+/**
+ * BNE Instruction -> if(R[rs] != R[rt]) { PC = PC + 4 + BranchAddr }
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rs, rt, imm)
+ */
 void BNE_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rsValue = executionScope->getRegisterValue(funcParams[0]);
     std::string rtValue = executionScope->getRegisterValue(funcParams[1]);
     std::string immValue = funcParams[2];
 
     if(rsValue.compare(rtValue) != 0) {
-        executionScope->setPC(immValue);
+        executionScope->setPC(immValue, PC_RELATIVE_ADDRESSING);
     } else {
         executionScope->incPC();
     }
 }
 
-
+/**
+ * J Instruction -> PC = JumpAddr
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (addr)
+ */
 void J_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string addrValue = funcParams[0];
 
-    executionScope->setPC(addrValue);
+    executionScope->setPC(addrValue, PSEUDO_DIRECT_ADDRESSING);
 }
 
+/**
+ * JAL Instruction -> R[31] = PC + 8; PC = JumpAddr
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (addr)
+ */
 void JAL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string addrValue = funcParams[0];
 
@@ -202,16 +388,27 @@ void JAL_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     std::string newPC = addBinary(PC, "1000");
 
     executionScope->setRegisterValue("11111", newPC);
-    executionScope->setPC(addrValue);
+    executionScope->setPC(addrValue, PSEUDO_DIRECT_ADDRESSING);
 }
 
+/**
+ * JR Instruction -> PC = R[rs]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rs)
+ */
 void JR_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rsValue = executionScope->getRegisterValue(funcParams[0]);
 
-    executionScope->setPC(rsValue);
+    executionScope->setPC(rsValue, PSEUDO_DIRECT_ADDRESSING);
 }
 
-
+/**
+ * LBU Instruction -> R[rt] = {24’b0, M[R[rs] + SignExtImm](7:0)}
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, imm, rs)
+ */
 void LBU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string immValue = funcParams[1];
@@ -224,6 +421,12 @@ void LBU_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
+/**
+ * LHU Instruction -> R[rt] = {16’b0, M[R[rs] + SignExtImm](15:0)}
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, imm, rs)
+ */
 void LHU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string immValue = funcParams[1];
@@ -236,6 +439,12 @@ void LHU_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
+/**
+ * LUI Instruction -> R[rt] = {imm, 16’b0}
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, imm)
+ */
 void LUI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string immValue = funcParams[1];
@@ -246,6 +455,12 @@ void LUI_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
+/**
+ * LW Instruction -> R[rt] = M[R[rs] + SignExtImm]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, imm, rs)
+ */
 void LW_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string immValue = funcParams[1];
@@ -257,6 +472,12 @@ void LW_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
     executionScope->incPC();
 }
 
+/**
+ * NOR Instruction -> R[rd] = ~(R[rs] | R[rt])
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
 void NOR_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -267,6 +488,12 @@ void NOR_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
+/**
+ * OR Instruction -> R[rd] = R[rs] | R[rt]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
 void OR_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -277,6 +504,12 @@ void OR_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
     executionScope->incPC();
 }
 
+/**
+ * ORI Instruction -> R[rt] = R[rs] | ZeroExtImm
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, rs, imm)
+ */
 void ORI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -287,7 +520,12 @@ void ORI_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
-
+/**
+ * SLT Instruction -> R[rd] = (R[rs] < R[rt]) ? 1 : 0
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
 void SLT_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -298,6 +536,12 @@ void SLT_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
+/**
+ * SLTI Instruction -> R[rt] = (R[rs] < SignExtImm) ? 1 : 0
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, rs, imm)
+ */
 void SLTI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -308,6 +552,12 @@ void SLTI_function(ExecutionScope* executionScope, std::vector<std::string> func
     executionScope->incPC();
 }
 
+/**
+ * SLTIU Instruction -> R[rt] = (R[rs] < SignExtImm) ? 1 : 0
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, rs, imm)
+ */
 void SLTIU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -318,6 +568,12 @@ void SLTIU_function(ExecutionScope* executionScope, std::vector<std::string> fun
     executionScope->incPC();
 }
 
+/**
+ * SLTU Instruction -> R[rd] = (R[rs] < R[rt]) ? 1 : 0
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
 void SLTU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -328,7 +584,12 @@ void SLTU_function(ExecutionScope* executionScope, std::vector<std::string> func
     executionScope->incPC();
 }
 
-
+/**
+ * SLL Instruction -> R[rd] = R[rt] << shamt
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rt, shamt)
+ */
 void SLL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rtValue = executionScope->getRegisterValue(funcParams[1]);
@@ -339,6 +600,12 @@ void SLL_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
+/**
+ * SRL Instruction -> R[rd] = R[rt] >> shamt
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rt, shamt)
+ */
 void SRL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rtValue = executionScope->getRegisterValue(funcParams[1]);
@@ -349,7 +616,12 @@ void SRL_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
-
+/**
+ * SB Instruction -> M[R[rs] + SignExtImm](7:0) = R[rt](7:0)
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, imm, rs)
+ */
 void SB_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = executionScope->getRegisterValue(funcParams[0]);
     std::string immValue = funcParams[1];
@@ -359,6 +631,12 @@ void SB_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
     executionScope->incPC();
 }
 
+/**
+ * SH Instruction -> M[R[rs] + SignExtImm](15:0) = R[rt](15:0)
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, imm, rs)
+ */
 void SH_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = executionScope->getRegisterValue(funcParams[0]);
     std::string immValue = funcParams[1];
@@ -368,6 +646,12 @@ void SH_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
     executionScope->incPC();
 }
 
+/**
+ * SW Instruction -> M[R[rs] + SignExtImm] = R[rt]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rt, imm, rs)
+ */
 void SW_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = executionScope->getRegisterValue(funcParams[0]);
     std::string immValue = funcParams[1];
@@ -377,7 +661,12 @@ void SW_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
     executionScope->incPC();
 }
 
-
+/**
+ * SUB Instruction -> R[rd] = R[rs] - R[rt]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
 void SUB_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
@@ -388,6 +677,12 @@ void SUB_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     executionScope->incPC();
 }
 
+/**
+ * SUBU Instruction -> R[rd] = R[rs] - R[rt]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
 void SUBU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rdValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);

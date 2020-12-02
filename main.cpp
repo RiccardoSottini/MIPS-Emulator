@@ -4,7 +4,7 @@
 #include "src/def.h"
 
 int main() {
-    /* Instruction Example */
+    /* Instruction Parse Example */
     std::string binary = "00100001001010010001001110001000";
     Instruction* secondInstruction = new Instruction(binary, BINARY_VALUE);
     secondInstruction->calculateInstruction();
@@ -13,8 +13,9 @@ int main() {
     /* Execution Scope Example */
     std::vector<std::string> instructions = {
         "addi $t1, $t1, 5000",
-        "addi $t2, $t2, 12",
+        "addi $t2, $t2, 0xC",
         "sb $t1, 4($t2)",
+        "sb $t1, 8($t2)",
 
         "add $s0, $zero, $zero",
         "addi $s1, $zero, 1",
@@ -30,6 +31,8 @@ int main() {
     };
 
     ExecutionScope *executionScope = new ExecutionScope(instructions);
+    executionScope->loadArray({"", "", ""});
+    executionScope->loadValue(15);
     executionScope->executeScope();
 
     std::cout << "Instructions:" << std::endl;

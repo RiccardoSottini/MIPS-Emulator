@@ -13,6 +13,8 @@ class ExecutionScope {
         void printRegisters();
         void printMemory();
 
+        void loadValue(std::string binaryValue);
+        void loadValue(const int decimalValue);
         void loadArray(std::vector<std::string> arrayValue);
         void loadArray(std::vector<int> arrayValue);
 
@@ -21,33 +23,33 @@ class ExecutionScope {
         void setWordValue(std::string wordAddress, std::string wordValue);
         void setWordValue(std::string wordAddress, std::string byteOffset, std::string wordValue);
         void setRegisterValue(std::string regPosition, std::string value);
-        void setInstruction(std::string insAddress, std::string instruction);
         void setLabelAddress(std::string label, std::string insAddress);
         void setPC(std::string newPC);
-        void setMemoryBound(std::string memAddress);
+        void setPC(std::string newPC, enum AddressingType addressingType);
 
         std::string getByteValue(std::string byteAddress);
         std::string getByteValue(std::string byteAddress, std::string byteOffset);
         std::string getWordValue(std::string wordAddress);
         std::string getWordValue(std::string wordAddress, std::string byteOffset);
         std::string getRegisterValue(std::string regPosition);
-        Instruction* getInstruction(std::string insAddress);
         std::string getLabelAddress(std::string label);
         std::string getPC();
 
         void incPC();
-        void jumpLabel(std::string label);
-
         bool isFinished();
 
     private:
         std::string PC;
-        std::string memPosition;
+        //std::string memPosition;
 
-        std::map<std::string, std::string> listRegisters;       //5-bit String  -> 32-bit String
+        std::map<std::string, std::string> memoryLocations;     //32-bit String (address)   -> 8-bit String  (byte)
+        std::map<std::string, std::string> listRegisters;       //5-bit  String (register)  -> 32-bit String (word)
+        std::map<std::string, std::string> listLabels;          //Label  String             -> 32-bit String (word)
+
+        /*std::map<std::string, std::string> listRegisters;       //5-bit String  -> 32-bit String
         std::map<std::string, std::string> memoryLocations;     //32-bit String -> 8-bit String
         std::map<std::string, Instruction*> listInstructions;   //32-bit String -> Instruction Pointer
-        std::map<std::string, std::string> listLabels;          //Label Name    -> 32-bit String
+        std::map<std::string, std::string> listLabels;*/          //Label Name    -> 32-bit String
 };
 
 #endif

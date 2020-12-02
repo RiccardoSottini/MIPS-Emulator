@@ -1,46 +1,82 @@
 #include "execution_scope.h"
 
+/**
+ * ExecutionScope Constructor - Initializes the data structures used by the Execution Scope
+ *
+ * @param instructions List of Instructions to load into the Execution Scope
+ */
 ExecutionScope::ExecutionScope(std::vector<std::string> instructions) {
-    this->PC = formatBinary("", 32);
-    this->memPosition = formatBinary("", 32);
+    this->setPC(startPC);
+    std::vector<Instruction*> instructionsParsed;
 
     for(unsigned int insIndex = 0; insIndex < instructions.size(); insIndex++) {
-        std::string insAddress = std::bitset<32>(insIndex * 4).to_string();
-        this->setInstruction(insAddress, instructions[insIndex]);
+        Instruction* instructionScope = new Instruction(instructions[insIndex], INSTRUCTION_VALUE, this);
+        instructionsParsed.push_back(instructionScope);
+
+        if(instructionScope->getStatementType() == LABEL) {
+            std::string insAddress = toBinary(toDecimal(this->PC) + (insIndex * 4));
+            this->setLabelAddress(instructionScope->getName(), insAddress);
+        }
+    }
+
+    for(unsigned int insIndex = 0; insIndex < instructionsParsed.size(); insIndex++) {
+        std::string insAddress = toBinary(toDecimal(this->PC) + (insIndex * 4));
+        std::string insValue = instructionsParsed[insIndex]->calculateBinary();
+
+        this->setWordValue(insAddress, insValue);
+
+        delete instructionsParsed[insIndex];
     }
 
     for(unsigned int regIndex = 0; regIndex < 32; regIndex++) {
         std::string regPosition = std::bitset<5>(regIndex).to_string();
         this->setRegisterValue(regPosition, "");
     }
+
+    this->setRegisterValue("11100", "10000000000001000000000000000");
+    this->setRegisterValue("11101", "1111111111111111111111111111100");
 }
 
+/**
+ * Emulate the MIPS Execution Scope
+ */
 void ExecutionScope::executeScope() {
+    this->setPC(startPC);
+
     while(!this->isFinished()) {
-        Instruction* instructionScope = this->getInstruction(this->PC);
-        instructionScope->calculateBinary();
+        std::string insValue = this->getWordValue(this->PC);
+
+        Instruction* instructionScope = new Instruction(insValue, BINARY_VALUE, this);
         instructionScope->executeInstruction();
+
+        delete instructionScope;
     }
 }
 
+/**
+ * Print the Instructions loaded into the Execution Scope
+ *
+ * @param inputType Format used to print out the Instruction
+ */
 void ExecutionScope::printInstructions(enum InputType inputType) {
-    int insPosition = 0;
-    Instruction* instructionScope = this->getInstruction(std::bitset<32>(insPosition).to_string());
+    std::string insAddress = startPC;
+    std::string insValue = "";
 
-    while(instructionScope != nullptr) {
-        std::string memAddress = std::bitset<32>(insPosition).to_string();
-
+    while((insValue = this->getWordValue(insAddress)) != "") {
         if(inputType == INSTRUCTION_VALUE) {
-            std::cout << toHex(memAddress, 8) << ":    " << instructionScope->getInstruction() << std::endl;
+            Instruction* instructionScope = new Instruction(insValue, BINARY_VALUE, this);
+            std::cout << toHex(insAddress, 8) << ": " << instructionScope->calculateInstruction() << std::endl;
         } else if(inputType == BINARY_VALUE) {
-            std::cout << toHex(memAddress, 8) << ":    " << instructionScope->getBinary() << std::endl;
+            std::cout << toHex(insAddress, 8) << ": " << insValue << std::endl;
         }
 
-        insPosition += 4;
-        instructionScope = this->getInstruction(std::bitset<32>(insPosition).to_string());
+        insAddress = addBinary(insAddress, "100");
     }
 }
 
+/**
+ * Print the Registers values of the Execution Scope
+ */
 void ExecutionScope::printRegisters() {
     for(int regIndex = 0; regIndex < 32; regIndex++) {
         std::string regPosition = std::bitset<5>(regIndex).to_string();
@@ -48,52 +84,121 @@ void ExecutionScope::printRegisters() {
     }
 }
 
+/**
+ * Print the Dynamic Memory Locations values loaded into the Execution Scope
+ */
 void ExecutionScope::printMemory() {
-    std::string memAddress = formatBinary("", 32);
-    int endPosition = toDecimal(this->memPosition);
+    std::string memAddress = formatBinary("10000000000001000000000000000", 32);
+    std::string gpValue = this->getRegisterValue("11100");
 
-    while(toDecimal(memAddress) < endPosition) {
+    while(toDecimal(memAddress) < toDecimal(gpValue)) {
         std::cout << toHex(memAddress, 8) << ":    " << this->getWordValue(memAddress) << std::endl;
         memAddress = addBinary(memAddress, "100");
     }
 }
 
+/**
+ * Load Binary Values into the Dynamic Memory
+ *
+ * @param binaryValue Binary Values to be loaded into the Dynamic Memory
+ */
+void ExecutionScope::loadValue(std::string binaryValue) {
+    std::string gpValue = this->getRegisterValue("11100");
+    this->setWordValue(gpValue, binaryValue);
+
+    this->setRegisterValue("11100", addBinary(gpValue, "100"));
+}
+
+/**
+ * Load an Integer Value that is then converted into its Binary Format into the Dynamic Memory
+ *
+ * @param decimalValue Integer that is converted into Binary Values and loaded into the Dynamic Memory
+ */
+void ExecutionScope::loadValue(const int decimalValue) {
+    std::string gpValue = this->getRegisterValue("11100");
+    this->setWordValue(gpValue, toBinary(decimalValue));
+
+    this->setRegisterValue("11100", addBinary(gpValue, "100"));
+}
+
+/**
+ * Load an array of Binary Values into the Dynamic Memory
+ *
+ * @param arrayValue Array of Binary Values
+ */
 void ExecutionScope::loadArray(std::vector<std::string> arrayValue) {
+    std::string gpValue = this->getRegisterValue("11100");
+
     for(unsigned int arrayIndex = 0; arrayIndex < arrayValue.size(); arrayIndex++) {
         std::string value = formatBinary(arrayValue[arrayIndex], 32);
+        this->setWordValue(gpValue, value);
 
-        this->setWordValue(this->memPosition, value);
-        this->memPosition = addBinary(this->memPosition, "100");
+        gpValue = addBinary(gpValue, "100");
     }
+
+    this->setRegisterValue("11100", gpValue);
 }
 
+/**
+ * Load an array of Integers converted into Binary Values into the Dynamic Memory
+ *
+ * @param arrayValue Array of Integer then converted into Binary Values
+ */
 void ExecutionScope::loadArray(std::vector<int> arrayValue) {
+    std::string gpValue = this->getRegisterValue("11100");
+
     for(unsigned int arrayIndex = 0; arrayIndex < arrayValue.size(); arrayIndex++) {
         std::string value = std::bitset<32>(arrayValue[arrayIndex]).to_string();
+        this->setWordValue(gpValue, value);
 
-        this->setWordValue(this->memPosition, value);
-        this->memPosition = addBinary(this->memPosition, "100");
+        gpValue = addBinary(gpValue, "100");
     }
+
+    this->setRegisterValue("11100", gpValue);
 }
 
+/**
+ * Set the Value to the specified Register
+ *
+ * @param regPosition Register selected to set the Value
+ * @param value Value set to the specified Register
+ */
 void ExecutionScope::setRegisterValue(std::string regPosition, std::string value) {
     regPosition = formatBinary(regPosition, 5);
 
     this->listRegisters[regPosition] = formatBinary(value, 32);
 }
 
+/**
+ * Set the Value to a certain Byte Memory Location specified by the Address
+ *
+ * @param byteAddress Address used to select a certain Memory Location
+ * @param byteValue Byte Value that is set at the Address specified
+ */
 void ExecutionScope::setByteValue(std::string byteAddress, std::string byteValue) {
     byteAddress = formatBinary(byteAddress, 32);
 
     this->memoryLocations[byteAddress] = formatBinary(byteValue, 8);
 }
 
+/**
+ * Set the Value to a certain Byte Memory Location calculated using the Address and the Offset
+ *
+ * @param byteAddress, byteOffset Parameters used to calculate the Address used to set the Byte
+ * @param byteValue Byte Value that is set at the Address calculated
+ */
 void ExecutionScope::setByteValue(std::string byteAddress, std::string byteOffset, std::string byteValue) {
     std::string pointedAddress = addBinary(byteAddress, byteOffset);
 
     this->setByteValue(pointedAddress, byteValue);
 }
 
+/**
+ * Set the Value to a certain Word Memory Location specified by the Address
+ *
+ * @param wordAddress Address used to select a certain Memory Location
+ * @param wordValue Word Value that is set at the Address specified
+ */
 void ExecutionScope::setWordValue(std::string wordAddress, std::string wordValue) {
     if(toDecimal(wordAddress) % 4 == 0) {
         wordAddress = formatBinary(wordAddress, 32);
@@ -103,11 +208,15 @@ void ExecutionScope::setWordValue(std::string wordAddress, std::string wordValue
         this->setByteValue(addBinary(wordAddress, "01"), wordValue.substr(8, 8));
         this->setByteValue(addBinary(wordAddress, "10"), wordValue.substr(16, 8));
         this->setByteValue(addBinary(wordAddress, "11"), wordValue.substr(24, 8));
-
-        this->setMemoryBound(wordAddress);
     }
 }
 
+/**
+ * Set the Value to a certain Word Memory Location calculated using the Address and the Offset
+ *
+ * @param wordAddress, byteOffset Parameters used to calculate the Address used to set the Word
+ * @param wordValue Word Value that is set at the Address calculated
+ */
 void ExecutionScope::setWordValue(std::string wordAddress, std::string byteOffset, std::string wordValue) {
     std::string pointedAddress = addBinary(wordAddress, byteOffset);
 
@@ -116,44 +225,76 @@ void ExecutionScope::setWordValue(std::string wordAddress, std::string byteOffse
     }
 }
 
-void ExecutionScope::setInstruction(std::string insAddress, std::string instruction) {
-    insAddress = formatBinary(insAddress, 32);
-
-    Instruction* instructionScope = new Instruction(instruction, INSTRUCTION_VALUE, this);
-    this->listInstructions[insAddress] = instructionScope;
-
-    if(instructionScope->getStatementType() == LABEL) {
-        this->setLabelAddress(instructionScope->getName(), insAddress);
-    }
-}
-
+/**
+ * Match the Label Name with its Location Address
+ *
+ * @param label Label Name
+ * @param insAddress Address to be matched with the Label Name
+ */
 void ExecutionScope::setLabelAddress(std::string label, std::string insAddress) {
     insAddress = formatBinary(insAddress, 32);
 
     this->listLabels[label] = insAddress;
 }
 
+/**
+ * Set the new Program Counter
+ *
+ * @param newPC The new Program Counter
+ */
+void ExecutionScope::setPC(std::string newPC) {
+    this->PC = formatBinary(newPC, 32);
+}
+
+/**
+ * Set the new Program Counter in base of the Addressing Type
+ *
+ * @param newPC The new Program Counter
+ * @param addressingType The Type of Addressing used
+ */
+void ExecutionScope::setPC(std::string newPC, enum AddressingType addressingType) {
+    if(addressingType == PC_RELATIVE_ADDRESSING) {
+        this->PC = addBinary("10000000000000000000000", newPC);
+    } else if(addressingType == PSEUDO_DIRECT_ADDRESSING) {
+        this->PC = formatBinary(newPC, 32);
+    }
+}
+
+/**
+ * Get the Byte allocated in a certain Memory Location
+ *
+ * @param byteAddress Address used to retrieve the Byte
+ * @return the Byte allocated at the Address gave as parameter
+ */
 std::string ExecutionScope::getByteValue(std::string byteAddress) {
     byteAddress = formatBinary(byteAddress, 32);
     auto posLocation = memoryLocations.find(byteAddress);
 
     if(posLocation != memoryLocations.end()) {
-        return posLocation->second;
+        return formatBinary(posLocation->second, 8);
     } else {
-        if(toDecimal(byteAddress) < toDecimal(this->memPosition)) {
-            return formatBinary("", 8);
-        } else {
-            return "";
-        }
+        return "";
     }
 }
 
+/**
+ * Get the Byte allocated in a certain Memory Location calculated using the Address and the Offset
+ *
+ * @param byteAddress, byteOffset Parameters used to calculate the Address used to retrieve the Byte
+ * @return the Byte allocated at the Address calculated
+ */
 std::string ExecutionScope::getByteValue(std::string byteAddress, std::string byteOffset) {
     std::string pointedAddress = addBinary(byteAddress, byteOffset);
 
     return this->getByteValue(pointedAddress);
 }
 
+/**
+ * Get the Word allocated in a certain Memory Location
+ *
+ * @param wordAddress Address used to retrieve the Word
+ * @return the Word allocated at the Address gave as parameter
+ */
 std::string ExecutionScope::getWordValue(std::string wordAddress) {
     if(toDecimal(wordAddress) % 4 == 0) {
         std::string firstByte = this->getByteValue(wordAddress);
@@ -167,6 +308,12 @@ std::string ExecutionScope::getWordValue(std::string wordAddress) {
     }
 }
 
+/**
+ * Get the Word allocated in a certain Memory Location calculated using the Address and the Offset
+ *
+ * @param wordAddress, byteOffset Parameters used to calculate the Address used to retrieve the Word
+ * @return the Word allocated at the Address calculated
+ */
 std::string ExecutionScope::getWordValue(std::string wordAddress, std::string byteOffset) {
     std::string pointedAddress = addBinary(wordAddress, byteOffset);
 
@@ -177,6 +324,12 @@ std::string ExecutionScope::getWordValue(std::string wordAddress, std::string by
     }
 }
 
+/**
+ * Get the Value assigned to a Register
+ *
+ * @param regPosition Register selected to get its Value
+ * @return The Value assigned to the specified Register
+ */
 std::string ExecutionScope::getRegisterValue(std::string regPosition) {
     regPosition = formatBinary(regPosition, 5);
     auto posRegister = listRegisters.find(regPosition);
@@ -188,17 +341,12 @@ std::string ExecutionScope::getRegisterValue(std::string regPosition) {
     }
 }
 
-Instruction* ExecutionScope::getInstruction(std::string insAddress) {
-    insAddress = formatBinary(insAddress, 32);
-    auto posInstruction = listInstructions.find(insAddress);
-
-    if(posInstruction != listInstructions.end()) {
-        return posInstruction->second;
-    } else {
-        return nullptr;
-    }
-}
-
+/**
+ * Get the Address matched with the specified Label Name
+ *
+ * @param label Label Name
+ * @return The Address matched with the specified Label Name
+ */
 std::string ExecutionScope::getLabelAddress(std::string label) {
     auto posLabel = listLabels.find(label);
 
@@ -209,38 +357,35 @@ std::string ExecutionScope::getLabelAddress(std::string label) {
     }
 }
 
+/**
+ * Get the Program Counter's Value
+ *
+ * @return current Program Counter's Value
+ */
 std::string ExecutionScope::getPC() {
     return this->PC;
 }
 
+/**
+ * Increment the Program Counter to point to the next Instruction
+ */
 void ExecutionScope::incPC() {
     std::string newPC = addBinary(this->PC, "100");
 
     this->PC = formatBinary(newPC, 32);
 }
 
-void ExecutionScope::setPC(std::string newPC) {
-    this->PC = formatBinary(newPC, 32);
-}
-
-void ExecutionScope::setMemoryBound(std::string memAddress) {
-    if(toDecimal(this->memPosition) <= toDecimal(memAddress)) {
-        int newBoundAddress = ((int) (toDecimal(memAddress) / 4)) * 4 + 4;
-
-        this->memPosition = std::bitset<32>(newBoundAddress).to_string();
-    }
-}
-
-void ExecutionScope::jumpLabel(std::string label) {
-    auto posLabel = listLabels.find(label);
-
-    if(posLabel != listLabels.end()) {
-        this->PC = posLabel->second;
-    }
-}
-
+/**
+ * Retrieves if there are Instructions left to be executed
+ *
+ * @return True if there are Instructions left to be executed / False if all the Instructions were already executed
+ */
 bool ExecutionScope::isFinished() {
-    auto posInstruction = listInstructions.find(this->PC);
+    if(toDecimal(this->PC) < toDecimal("10000000000000000000000000000")) {
+        auto posInstruction = memoryLocations.find(this->PC);
 
-    return posInstruction == listInstructions.end();
+        return posInstruction == memoryLocations.end();
+    }
+
+    return true;
 }
