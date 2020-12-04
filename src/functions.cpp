@@ -7,6 +7,9 @@
  * @return True if the String contains a Number / False if it does not
  */
 bool isNumber(std::string s) {
+    if(s.size() && (s[0] == '+' || s[0] == '-'))
+        s.erase(0, 1);
+
     for(unsigned int i = 0; i < s.length(); i++)
         if(std::isdigit(s[i]) == false)
             return false;
@@ -95,6 +98,28 @@ std::string toHex(std::string binaryValue, const int hexSize) {
     return formatHex(hexValue, hexSize);
 }
 
+std::string toTwoComplement(const int decimalValue, const int binarySize) {
+    std::string binaryConversion = toBinary(abs(decimalValue));
+    std::string binaryValue = formatBinary(binaryConversion, binarySize);
+
+    if(decimalValue >= 0) {
+        return binaryValue;
+    } else {
+        std::string invertedBinary = invertBinary(binaryValue);
+        return addBinary(invertedBinary, "1");
+    }
+}
+
+int fromTwoComplement(std::string binaryValue) {
+    if(binaryValue[0] == '0') {
+        return toDecimal(binaryValue);
+    } else {
+        std::string invertedBinary = invertBinary(binaryValue);
+        std::string binaryValue = addBinary(invertedBinary, "1");
+        return -toDecimal(binaryValue);
+    }
+}
+
 /**
  * Transform a Binary Value and make it to have a Fixed Length specified by the Size parameter
  *
@@ -133,6 +158,18 @@ std::string formatHex(std::string hexValue, const int hexSize) {
     return "0x" + hexValue;
 }
 
+std::string invertBinary(std::string binaryValue) {
+    std::string binaryResult;
+
+    for(int index = 0; index < binaryValue.size(); index++) {
+        int bit = binaryValue[index] - 48;
+
+        binaryResult.push_back((!bit) + 48);
+    }
+
+    return binaryResult;
+}
+
 /**
  * ADD two Binary Values
  *
@@ -141,10 +178,22 @@ std::string formatHex(std::string hexValue, const int hexSize) {
  * @return Sum between the two Binary Values
  */
 std::string addBinary(std::string binaryA, std::string binaryB) {
-    int decimalA = std::stoi(binaryA, nullptr, 2);
-    int decimalB = std::stoi(binaryB, nullptr, 2);
+    std::string binaryResult;
+    binaryA = formatBinary(binaryA, 32);
+    binaryB = formatBinary(binaryB, 32);
 
-    return std::bitset<32>(decimalA + decimalB).to_string();
+    int carry = 0;
+    for(int index = 31; index >= 0; index--) {
+        int a = binaryA[index] - 48;
+        int b = binaryB[index] - 48;
+
+        int sum = ((a ^ b) ^ carry);                    // sum = a xor b xor c
+        carry = ((a & b) | (a & carry)) | (b & carry);  // carry = ab + ac + bc
+
+        binaryResult = ((char)(sum + 48)) + binaryResult;
+    }
+
+    return binaryResult;
 }
 
 /**
@@ -231,6 +280,33 @@ std::string shiftRightBinary(std::string binaryValue, std::string binaryShift) {
     return std::bitset<32>(decimalValue >> decimalShift).to_string();
 }
 
+std::string SignExtImm(std::string immediate) {
+    immediate = formatBinary(immediate, 16);
+    char signExt = immediate[0];
+
+    return std::string(16, signExt) + immediate;
+}
+
+std::string ZeroExtImm(std::string immediate) {
+    immediate = formatBinary(immediate, 16);
+
+    return std::string(16, '0') + immediate;
+}
+
+std::string BranchAddr(std::string immediate) {
+    immediate = formatBinary(immediate, 16);
+    char signExt = immediate[0];
+
+    return std::string(14, signExt) + immediate + std::string(2, '0');
+}
+
+std::string JumpAddr(std::string PC, std::string address) {
+    address = formatBinary(shiftLeftBinary(address, "100"), 28);
+    std::string newPC = addBinary(PC, "100");
+
+    return newPC.substr(0, 4) + address;
+}
+
 /**
  * ADD Instruction -> R[rd] = R[rs] + R[rt]
  *
@@ -256,7 +332,7 @@ void ADD_function(ExecutionScope* executionScope, std::vector<std::string> funcP
 void ADDI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
-    std::string immValue = funcParams[2];
+    std::string immValue = SignExtImm(funcParams[2]);
     std::string resultValue = addBinary(rsValue, immValue);
 
     executionScope->setRegisterValue(rtValue, resultValue);
@@ -272,7 +348,7 @@ void ADDI_function(ExecutionScope* executionScope, std::vector<std::string> func
 void ADDIU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
-    std::string immValue = funcParams[2];
+    std::string immValue = SignExtImm(funcParams[2]);
     std::string resultValue = addBinary(rsValue, immValue);
 
     executionScope->setRegisterValue(rtValue, resultValue);
@@ -320,7 +396,7 @@ void AND_function(ExecutionScope* executionScope, std::vector<std::string> funcP
 void ANDI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
-    std::string immValue = funcParams[2];
+    std::string immValue = ZeroExtImm(funcParams[2]);
     std::string resultValue = andBinary(rsValue, immValue);
 
     executionScope->setRegisterValue(rtValue, resultValue);
@@ -411,7 +487,7 @@ void JR_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
  */
 void LBU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
-    std::string immValue = funcParams[1];
+    std::string immValue = SignExtImm(funcParams[1]);
     std::string rsValue = executionScope->getRegisterValue(funcParams[2]);
 
     std::string wordValue = executionScope->getWordValue(rsValue, immValue);
@@ -429,7 +505,7 @@ void LBU_function(ExecutionScope* executionScope, std::vector<std::string> funcP
  */
 void LHU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
-    std::string immValue = funcParams[1];
+    std::string immValue = SignExtImm(funcParams[1]);
     std::string rsValue = executionScope->getRegisterValue(funcParams[2]);
 
     std::string wordValue = executionScope->getWordValue(rsValue, immValue);
@@ -463,7 +539,7 @@ void LUI_function(ExecutionScope* executionScope, std::vector<std::string> funcP
  */
 void LW_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
-    std::string immValue = funcParams[1];
+    std::string immValue = SignExtImm(funcParams[1]);
     std::string rsValue = executionScope->getRegisterValue(funcParams[2]);
 
     std::string resultValue = executionScope->getWordValue(rsValue, immValue);
@@ -513,7 +589,7 @@ void OR_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
 void ORI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
-    std::string immValue = funcParams[2];
+    std::string immValue = ZeroExtImm(funcParams[2]);
     std::string resultValue = orBinary(rsValue, immValue);
 
     executionScope->setRegisterValue(rtValue, resultValue);
@@ -545,7 +621,7 @@ void SLT_function(ExecutionScope* executionScope, std::vector<std::string> funcP
 void SLTI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
-    std::string immValue = funcParams[2];
+    std::string immValue = SignExtImm(funcParams[2]);
     std::string resultValue = (toDecimal(rsValue) < toDecimal(immValue)) ? "1" : "0";
 
     executionScope->setRegisterValue(rtValue, resultValue);
@@ -561,7 +637,7 @@ void SLTI_function(ExecutionScope* executionScope, std::vector<std::string> func
 void SLTIU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = funcParams[0];
     std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
-    std::string immValue = funcParams[2];
+    std::string immValue = SignExtImm(funcParams[2]);
     std::string resultValue = (toDecimal(rsValue) < toDecimal(immValue)) ? "1" : "0";
 
     executionScope->setRegisterValue(rtValue, resultValue);
@@ -624,7 +700,7 @@ void SRL_function(ExecutionScope* executionScope, std::vector<std::string> funcP
  */
 void SB_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = executionScope->getRegisterValue(funcParams[0]);
-    std::string immValue = funcParams[1];
+    std::string immValue = SignExtImm(funcParams[1]);
     std::string rsValue = executionScope->getRegisterValue(funcParams[2]);
 
     executionScope->setWordValue(rsValue, immValue, rtValue.substr(24, 8));
@@ -639,7 +715,7 @@ void SB_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
  */
 void SH_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = executionScope->getRegisterValue(funcParams[0]);
-    std::string immValue = funcParams[1];
+    std::string immValue = SignExtImm(funcParams[1]);
     std::string rsValue = executionScope->getRegisterValue(funcParams[2]);
 
     executionScope->setWordValue(rsValue, immValue, rtValue.substr(16, 16));
@@ -654,7 +730,7 @@ void SH_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
  */
 void SW_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rtValue = executionScope->getRegisterValue(funcParams[0]);
-    std::string immValue = funcParams[1];
+    std::string immValue = SignExtImm(funcParams[1]);
     std::string rsValue = executionScope->getRegisterValue(funcParams[2]);
 
     executionScope->setWordValue(rsValue, immValue, rtValue);

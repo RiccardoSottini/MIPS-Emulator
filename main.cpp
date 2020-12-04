@@ -12,9 +12,8 @@ int main() {
 
     /* Execution Scope Example */
     std::vector<std::string> instructions = {
-        "addi $t1, $t1, 5000",
-        "addi $t2, $t2, 0xC",
-        "sb $t1, 4($t2)",
+        "addi $t1, $t1, -5000",
+        "sh $t1, 4($t2)",
         "sb $t1, 8($t2)",
 
         "add $s0, $zero, $zero",
@@ -26,13 +25,14 @@ int main() {
         "addi $s0, $s0, 1",
         "j Loop",
         "Done:",
-        "addi $s2, $s2, 2",
+        "addi $s2, $s2, -2",
         "addi $s2, $s2, 2",
     };
 
     ExecutionScope *executionScope = new ExecutionScope(instructions);
     executionScope->loadArray({"", "", ""});
     executionScope->loadValue(15);
+    executionScope->setRegisterValue("01010", "10000000000001000000000000000");
     executionScope->executeScope();
 
     std::cout << "Instructions:" << std::endl;

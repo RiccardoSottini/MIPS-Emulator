@@ -224,7 +224,7 @@ std::string Instruction::calculateField(std::string parameterName, std::string p
             if(parameterName == "shamt") {
                 value = std::bitset<5>(std::stoi(parameterValue)).to_string();
             } else if(parameterName == "imm") {
-                value = std::bitset<16>(std::stoi(parameterValue)).to_string();
+                value = toTwoComplement(std::stoi(parameterValue), 16);
             } else if(parameterName == "addr") {
                 value = std::bitset<26>(std::stoi(parameterValue)).to_string();
             }
@@ -263,8 +263,10 @@ std::string Instruction::calculateParameter(std::string fieldName, std::string f
         if(posRegister >= 0 && posRegister < 32) {
             return registerPointers[posRegister];
         }
-    } else if(fieldName == "shamt" || fieldName == "imm") {
+    } else if(fieldName == "shamt") {
         return std::to_string(toDecimal(fieldValue));
+    } else if(fieldName == "imm") {
+        return std::to_string(fromTwoComplement(fieldValue));
     } else if(fieldName == "addr") {
         return toHex(fieldValue, 8);
     }

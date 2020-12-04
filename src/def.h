@@ -68,9 +68,13 @@ std::string toBinary(const int decimalValue);
 std::string toHex(std::string binaryValue);
 std::string toHex(std::string binaryValue, const int hexSize);
 
+std::string toTwoComplement(const int decimalValue, const int binarySize);
+int fromTwoComplement(std::string binaryValue);
+
 std::string formatBinary(std::string binaryValue, const int binarySize);
 std::string formatHex(std::string hexValue, const int hexSize);
 
+std::string invertBinary(std::string binaryValue);
 std::string addBinary(std::string binaryA, std::string binaryB);
 std::string andBinary(std::string binaryA, std::string binaryB);
 std::string norBinary(std::string binaryA, std::string binaryB);
@@ -78,6 +82,11 @@ std::string orBinary(std::string binaryA, std::string binaryB);
 std::string shiftLeftBinary(std::string binaryValue, std::string binaryShift);
 std::string shiftRightBinary(std::string binaryValue, std::string binaryShift);
 std::string subBinary(std::string binaryA, std::string binaryB);
+
+std::string SignExtImm(std::string immediate);
+std::string ZeroExtImm(std::string immediate);
+std::string BranchAddr(std::string immediate);
+std::string JumpAddr(std::string PC, std::string address);
 
 void ADD_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 void ADDI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
