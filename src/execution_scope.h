@@ -25,7 +25,7 @@ class ExecutionScope {
         void setRegisterValue(std::string regPosition, std::string value);
         void setLabelAddress(std::string label, std::string insAddress);
         void setPC(std::string newPC);
-        void setPC(std::string newPC, enum AddressingType addressingType);
+        void setPC(std::string addressingValue, enum AddressingType addressingType);
 
         std::string getByteValue(std::string byteAddress);
         std::string getByteValue(std::string byteAddress, std::string byteOffset);
@@ -33,6 +33,7 @@ class ExecutionScope {
         std::string getWordValue(std::string wordAddress, std::string byteOffset);
         std::string getRegisterValue(std::string regPosition);
         std::string getLabelAddress(std::string label);
+        std::string getLabelName(std::string address);
         std::string getPC();
 
         void incPC();
@@ -42,9 +43,10 @@ class ExecutionScope {
         std::string PC;
         //std::string memPosition;
 
-        std::map<std::string, std::string> memoryLocations;     //32-bit String (address)   -> 8-bit String  (byte)
+        std::map<std::string, std::string> memoryLocations;     //32-bit String (address)   -> 8-bit  String  (byte)
         std::map<std::string, std::string> listRegisters;       //5-bit  String (register)  -> 32-bit String (word)
         std::map<std::string, std::string> listLabels;          //Label  String             -> 32-bit String (word)
+        std::map<std::string, std::string> pointerLabels;       //32-bit String (word)      -> Label  String
 
         /*std::map<std::string, std::string> listRegisters;       //5-bit String  -> 32-bit String
         std::map<std::string, std::string> memoryLocations;     //32-bit String -> 8-bit String

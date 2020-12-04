@@ -190,9 +190,10 @@ std::string addBinary(std::string binaryA, std::string binaryB) {
         int sum = ((a ^ b) ^ carry);                    // sum = a xor b xor c
         carry = ((a & b) | (a & carry)) | (b & carry);  // carry = ab + ac + bc
 
-        binaryResult = ((char)(sum + 48)) + binaryResult;
+        binaryResult.push_back(sum + 48);
     }
 
+    std::reverse(binaryResult.begin(), binaryResult.end());
     return binaryResult;
 }
 
@@ -204,10 +205,13 @@ std::string addBinary(std::string binaryA, std::string binaryB) {
  * @return Sum between the two Binary Values
  */
 std::string subBinary(std::string binaryA, std::string binaryB) {
-    int decimalA = std::stoi(binaryA, nullptr, 2);
-    int decimalB = std::stoi(binaryB, nullptr, 2);
+    binaryA = formatBinary(binaryA, 32);
+    binaryB = formatBinary(binaryB, 32);
 
-    return std::bitset<32>(decimalA - decimalB).to_string();
+    std::string invertedB = invertBinary(binaryB);
+    binaryB = addBinary(invertedB, "1");
+
+    return addBinary(binaryA, binaryB);
 }
 
 /**
@@ -218,10 +222,20 @@ std::string subBinary(std::string binaryA, std::string binaryB) {
  * @return Result of the AND Logical Operation between the two Binary Values
  */
 std::string andBinary(std::string binaryA, std::string binaryB) {
-    int decimalA = std::stoi(binaryA, nullptr, 2);
-    int decimalB = std::stoi(binaryB, nullptr, 2);
+    std::string binaryResult;
+    binaryA = formatBinary(binaryA, 32);
+    binaryB = formatBinary(binaryB, 32);
 
-    return std::bitset<32>(decimalA & decimalB).to_string();
+    for(int index = 0; index < 32; index++) {
+        int a = binaryA[index] - 48;
+        int b = binaryB[index] - 48;
+
+        int sum = a & b;
+
+        binaryResult.push_back(sum + 48);
+    }
+
+    return binaryResult;
 }
 
 /**
@@ -232,10 +246,20 @@ std::string andBinary(std::string binaryA, std::string binaryB) {
  * @return Result of the NOR Logical Operation between the two Binary Values
  */
 std::string norBinary(std::string binaryA, std::string binaryB) {
-    int decimalA = std::stoi(binaryA, nullptr, 2);
-    int decimalB = std::stoi(binaryB, nullptr, 2);
+    std::string binaryResult;
+    binaryA = formatBinary(binaryA, 32);
+    binaryB = formatBinary(binaryB, 32);
 
-    return std::bitset<32>(~(decimalA | decimalB)).to_string();
+    for(int index = 0; index < 32; index++) {
+        int a = binaryA[index] - 48;
+        int b = binaryB[index] - 48;
+
+        int sum = ~(a | b);
+
+        binaryResult.push_back(sum + 48);
+    }
+
+    return binaryResult;
 }
 
 /**
@@ -246,10 +270,20 @@ std::string norBinary(std::string binaryA, std::string binaryB) {
  * @return Result of the OR Logical Operation between the two Binary Values
  */
 std::string orBinary(std::string binaryA, std::string binaryB) {
-    int decimalA = std::stoi(binaryA, nullptr, 2);
-    int decimalB = std::stoi(binaryB, nullptr, 2);
+    std::string binaryResult;
+    binaryA = formatBinary(binaryA, 32);
+    binaryB = formatBinary(binaryB, 32);
 
-    return std::bitset<32>(decimalA | decimalB).to_string();
+    for(int index = 0; index < 32; index++) {
+        int a = binaryA[index] - 48;
+        int b = binaryB[index] - 48;
+
+        int sum = a | b;
+
+        binaryResult.push_back(sum + 48);
+    }
+
+    return binaryResult;
 }
 
 /**
@@ -301,10 +335,10 @@ std::string BranchAddr(std::string immediate) {
 }
 
 std::string JumpAddr(std::string PC, std::string address) {
-    address = formatBinary(shiftLeftBinary(address, "100"), 28);
+    address = formatBinary(address, 26);
     std::string newPC = addBinary(PC, "100");
 
-    return newPC.substr(0, 4) + address;
+    return newPC.substr(0, 4) + address + std::string(2, '0');
 }
 
 /**

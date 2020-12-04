@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <bitset>
 #include <functional>
+#include <algorithm>
 
 /**
  * Data Format
@@ -55,9 +56,17 @@ enum AddressingType {
     PSEUDO_DIRECT_ADDRESSING    ///< Pseudo-Direct Addressing
 };
 
+enum InstructionPurpose {
+    INSTRUCTION_MATHS,
+    INSTRUCTION_LOGIC,
+    INSTRUCTION_ADDRESS,
+    INSTRUCTION_MOVE
+};
+
 #include "memory_structure.h"
 #include "instruction.h"
 #include "execution_scope.h"
+#include "execution_interface.h"
 
 bool isNumber(std::string s);
 bool isHex(std::string hexValue);
@@ -133,35 +142,35 @@ void SUBU_function(ExecutionScope* executionScope, std::vector<std::string> func
  * @hideinitializer
  */
 const std::map<std::string, MemoryStructure> instructionFormats = {
-    { "add",    MemoryStructure(R_FORMAT, "000000", "100000",   {"rd", "rs", "rt"},     ADD_function)   },
-    { "addi",   MemoryStructure(I_FORMAT, "001000", "",         {"rt", "rs", "imm"},    ADDI_function)  },
-    { "addiu",  MemoryStructure(I_FORMAT, "001001", "",         {"rt", "rs", "imm"},    ADDIU_function) },
-    { "addu",   MemoryStructure(R_FORMAT, "000000", "100001",   {"rd", "rs", "rt"},     ADDU_function)  },
-    { "and",    MemoryStructure(R_FORMAT, "000000", "100100",   {"rd", "rs", "rt"},     AND_function)   },
-    { "andi",   MemoryStructure(I_FORMAT, "001100", "",         {"rt", "rs", "imm"},    ANDI_function)  },
-    { "beq",    MemoryStructure(I_FORMAT, "000100", "",         {"rs", "rt", "imm"},    BEQ_function)   },
-    { "bne",    MemoryStructure(I_FORMAT, "000101", "",         {"rs", "rt", "imm"},    BNE_function)   },
-    { "j",      MemoryStructure(J_FORMAT, "000010", "",         {"addr"},               J_function)     },
-    { "jal",    MemoryStructure(J_FORMAT, "000011", "",         {"addr"},               JAL_function)   },
-    { "jr",     MemoryStructure(R_FORMAT, "000000", "001000",   {"rs"},                 JR_function)    },
-    { "lbu",    MemoryStructure(I_FORMAT, "100100", "",         {"rt", "imm", "rs"},    LBU_function)   },
-    { "lhu",    MemoryStructure(I_FORMAT, "100101", "",         {"rt", "imm", "rs"},    LHU_function)   },
-    { "lui",    MemoryStructure(I_FORMAT, "001111", "",         {"rt", "imm"},          LUI_function)   },
-    { "lw",     MemoryStructure(I_FORMAT, "100011", "",         {"rt", "imm", "rs"},    LW_function)    },
-    { "nor",    MemoryStructure(R_FORMAT, "000000", "100111",   {"rd", "rs", "rt"},     NOR_function)   },
-    { "or",     MemoryStructure(R_FORMAT, "000000", "100101",   {"rd", "rs", "rt"},     OR_function)    },
-    { "ori",    MemoryStructure(I_FORMAT, "001101", "",         {"rt", "rs", "imm"},    ORI_function)   },
-    { "slt",    MemoryStructure(R_FORMAT, "000000", "101010",   {"rd", "rs", "rt"},     SLT_function)   },
-    { "slti",   MemoryStructure(I_FORMAT, "001010", "",         {"rt", "rs", "imm"},    SLTI_function)  },
-    { "sltiu",  MemoryStructure(I_FORMAT, "001011", "",         {"rt", "rs", "imm"},    SLTIU_function) },
-    { "sltu",   MemoryStructure(R_FORMAT, "000000", "101011",   {"rd", "rs", "rt"},     SLTU_function)  },
-    { "sll",    MemoryStructure(R_FORMAT, "000000", "000000",   {"rd", "rt", "shamt"},  SLL_function)   },
-    { "srl",    MemoryStructure(R_FORMAT, "000000", "000010",   {"rd", "rt", "shamt"},  SRL_function)   },
-    { "sb",     MemoryStructure(I_FORMAT, "101000", "",         {"rt", "imm", "rs"},    SB_function)    },
-    { "sh",     MemoryStructure(I_FORMAT, "101001", "",         {"rt", "imm", "rs"},    SH_function)    },
-    { "sw",     MemoryStructure(I_FORMAT, "101011", "",         {"rt", "imm", "rs"},    SW_function)    },
-    { "sub",    MemoryStructure(R_FORMAT, "000000", "100010",   {"rd", "rs", "rt"},     SUB_function)   },
-    { "subu",   MemoryStructure(R_FORMAT, "000000", "100011",   {"rd", "rs", "rt"},     SUBU_function)  }
+    { "add",    MemoryStructure(R_FORMAT, INSTRUCTION_MATHS,    "000000", "100000",   {"rd", "rs", "rt"},     ADD_function)   },
+    { "addi",   MemoryStructure(I_FORMAT, INSTRUCTION_MATHS,    "001000", "",         {"rt", "rs", "imm"},    ADDI_function)  },
+    { "addiu",  MemoryStructure(I_FORMAT, INSTRUCTION_MATHS,    "001001", "",         {"rt", "rs", "imm"},    ADDIU_function) },
+    { "addu",   MemoryStructure(R_FORMAT, INSTRUCTION_MATHS,    "000000", "100001",   {"rd", "rs", "rt"},     ADDU_function)  },
+    { "and",    MemoryStructure(R_FORMAT, INSTRUCTION_LOGIC,    "000000", "100100",   {"rd", "rs", "rt"},     AND_function)   },
+    { "andi",   MemoryStructure(I_FORMAT, INSTRUCTION_LOGIC,    "001100", "",         {"rt", "rs", "imm"},    ANDI_function)  },
+    { "beq",    MemoryStructure(I_FORMAT, INSTRUCTION_ADDRESS,  "000100", "",         {"rs", "rt", "imm"},    BEQ_function)   },
+    { "bne",    MemoryStructure(I_FORMAT, INSTRUCTION_ADDRESS,  "000101", "",         {"rs", "rt", "imm"},    BNE_function)   },
+    { "j",      MemoryStructure(J_FORMAT, INSTRUCTION_ADDRESS,  "000010", "",         {"addr"},               J_function)     },
+    { "jal",    MemoryStructure(J_FORMAT, INSTRUCTION_ADDRESS,  "000011", "",         {"addr"},               JAL_function)   },
+    { "jr",     MemoryStructure(R_FORMAT, INSTRUCTION_ADDRESS,  "000000", "001000",   {"rs"},                 JR_function)    },
+    { "lbu",    MemoryStructure(I_FORMAT, INSTRUCTION_MOVE,     "100100", "",         {"rt", "imm", "rs"},    LBU_function)   },
+    { "lhu",    MemoryStructure(I_FORMAT, INSTRUCTION_MOVE,     "100101", "",         {"rt", "imm", "rs"},    LHU_function)   },
+    { "lui",    MemoryStructure(I_FORMAT, INSTRUCTION_MOVE,     "001111", "",         {"rt", "imm"},          LUI_function)   },
+    { "lw",     MemoryStructure(I_FORMAT, INSTRUCTION_MOVE,     "100011", "",         {"rt", "imm", "rs"},    LW_function)    },
+    { "nor",    MemoryStructure(R_FORMAT, INSTRUCTION_LOGIC,    "000000", "100111",   {"rd", "rs", "rt"},     NOR_function)   },
+    { "or",     MemoryStructure(R_FORMAT, INSTRUCTION_LOGIC,    "000000", "100101",   {"rd", "rs", "rt"},     OR_function)    },
+    { "ori",    MemoryStructure(I_FORMAT, INSTRUCTION_LOGIC,    "001101", "",         {"rt", "rs", "imm"},    ORI_function)   },
+    { "slt",    MemoryStructure(R_FORMAT, INSTRUCTION_LOGIC,    "000000", "101010",   {"rd", "rs", "rt"},     SLT_function)   },
+    { "slti",   MemoryStructure(I_FORMAT, INSTRUCTION_LOGIC,    "001010", "",         {"rt", "rs", "imm"},    SLTI_function)  },
+    { "sltiu",  MemoryStructure(I_FORMAT, INSTRUCTION_LOGIC,    "001011", "",         {"rt", "rs", "imm"},    SLTIU_function) },
+    { "sltu",   MemoryStructure(R_FORMAT, INSTRUCTION_LOGIC,    "000000", "101011",   {"rd", "rs", "rt"},     SLTU_function)  },
+    { "sll",    MemoryStructure(R_FORMAT, INSTRUCTION_LOGIC,    "000000", "000000",   {"rd", "rt", "shamt"},  SLL_function)   },
+    { "srl",    MemoryStructure(R_FORMAT, INSTRUCTION_LOGIC,    "000000", "000010",   {"rd", "rt", "shamt"},  SRL_function)   },
+    { "sb",     MemoryStructure(I_FORMAT, INSTRUCTION_MOVE,     "101000", "",         {"rt", "imm", "rs"},    SB_function)    },
+    { "sh",     MemoryStructure(I_FORMAT, INSTRUCTION_MOVE,     "101001", "",         {"rt", "imm", "rs"},    SH_function)    },
+    { "sw",     MemoryStructure(I_FORMAT, INSTRUCTION_MOVE,     "101011", "",         {"rt", "imm", "rs"},    SW_function)    },
+    { "sub",    MemoryStructure(R_FORMAT, INSTRUCTION_MATHS,    "000000", "100010",   {"rd", "rs", "rt"},     SUB_function)   },
+    { "subu",   MemoryStructure(R_FORMAT, INSTRUCTION_MATHS,    "000000", "100011",   {"rd", "rs", "rt"},     SUBU_function)  }
 };
 
 /**
@@ -277,5 +286,16 @@ const std::vector<std::string> registerPointers {
  * Initial value of the Program Counter
  */
 const std::string startPC = formatBinary("10000000000000000000000", 32);
+
+
+/**
+ * Initial value of the Global Area Pointer Register
+ */
+const std::string startGP = formatBinary("10000000000001000000000000000", 32);
+
+/**
+ * Initial value of the Stack Pointer Register
+ */
+const std::string startSP = formatBinary("1111111111111111111111111111100", 32);
 
 #endif

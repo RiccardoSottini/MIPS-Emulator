@@ -18,6 +18,7 @@ class Instruction {
         std::string getBinary();
         std::string getInstruction();
 
+        void setAddress(std::string instructionAddress);
         void setField(std::string fieldName, std::string fieldValue);
         void setParameter(const int index, std::string parameterValue);
 
@@ -33,6 +34,8 @@ class Instruction {
 
     private:
         std::string name;
+        std::string instructionAddress = "";
+
         std::vector<std::string> parameters;
 
         std::map<std::string, std::string> memoryFields;

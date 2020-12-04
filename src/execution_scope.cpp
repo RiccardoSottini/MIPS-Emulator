@@ -21,6 +21,8 @@ ExecutionScope::ExecutionScope(std::vector<std::string> instructions) {
 
     for(unsigned int insIndex = 0; insIndex < instructionsParsed.size(); insIndex++) {
         std::string insAddress = toBinary(toDecimal(this->PC) + (insIndex * 4));
+
+        instructionsParsed[insIndex]->setAddress(insAddress);
         std::string insValue = instructionsParsed[insIndex]->calculateBinary();
 
         this->setWordValue(insAddress, insValue);
@@ -33,8 +35,8 @@ ExecutionScope::ExecutionScope(std::vector<std::string> instructions) {
         this->setRegisterValue(regPosition, "");
     }
 
-    this->setRegisterValue("11100", "10000000000001000000000000000");
-    this->setRegisterValue("11101", "1111111111111111111111111111100");
+    this->setRegisterValue("11100", startGP);
+    this->setRegisterValue("11101", startSP);
 }
 
 /**
@@ -65,6 +67,8 @@ void ExecutionScope::printInstructions(enum InputType inputType) {
     while((insValue = this->getWordValue(insAddress)) != "") {
         if(inputType == INSTRUCTION_VALUE) {
             Instruction* instructionScope = new Instruction(insValue, BINARY_VALUE, this);
+            instructionScope->setAddress(insAddress);
+
             std::cout << toHex(insAddress, 8) << ": " << instructionScope->calculateInstruction() << std::endl;
         } else if(inputType == BINARY_VALUE) {
             std::cout << toHex(insAddress, 8) << ": " << insValue << std::endl;
@@ -235,6 +239,7 @@ void ExecutionScope::setLabelAddress(std::string label, std::string insAddress) 
     insAddress = formatBinary(insAddress, 32);
 
     this->listLabels[label] = insAddress;
+    this->pointerLabels[insAddress] = label;
 }
 
 /**
@@ -249,14 +254,17 @@ void ExecutionScope::setPC(std::string newPC) {
 /**
  * Set the new Program Counter in base of the Addressing Type
  *
- * @param newPC The new Program Counter
+ * @param addressingValue The value used to calculate the new Program Counter
  * @param addressingType The Type of Addressing used
  */
-void ExecutionScope::setPC(std::string newPC, enum AddressingType addressingType) {
+void ExecutionScope::setPC(std::string addressingValue, enum AddressingType addressingType) {
     if(addressingType == PC_RELATIVE_ADDRESSING) {
-        this->PC = addBinary("10000000000000000000000", newPC);
+        /* PC = PC + 4 + BranchAddr */
+        std::string newPC = addBinary(this->PC, "100");
+        this->PC = addBinary(newPC, BranchAddr(addressingValue));
     } else if(addressingType == PSEUDO_DIRECT_ADDRESSING) {
-        this->PC = formatBinary(newPC, 32);
+        /* PC = JumpAddr */
+        this->PC = JumpAddr(this->PC, addressingValue);
     }
 }
 
@@ -351,6 +359,16 @@ std::string ExecutionScope::getLabelAddress(std::string label) {
     auto posLabel = listLabels.find(label);
 
     if(posLabel != listLabels.end()) {
+        return posLabel->second;
+    } else {
+        return "";
+    }
+}
+
+std::string ExecutionScope::getLabelName(std::string address) {
+    auto posLabel = pointerLabels.find(formatBinary(address, 32));
+
+    if(posLabel != pointerLabels.end()) {
         return posLabel->second;
     } else {
         return "";

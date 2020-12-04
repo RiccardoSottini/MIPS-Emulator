@@ -229,8 +229,14 @@ std::string Instruction::calculateField(std::string parameterName, std::string p
                 value = std::bitset<26>(std::stoi(parameterValue)).to_string();
             }
         } else {
-            if(executionScope != nullptr) {
-                value = executionScope->getLabelAddress(parameterValue);
+            if(this->executionScope != nullptr && this->instructionAddress != "") {
+                std::string labelAddress = executionScope->getLabelAddress(parameterValue);
+
+                if(parameterName == "imm") {
+                    value = shiftRightBinary(subBinary(labelAddress, instructionAddress), "10");
+                } else if(parameterName == "addr") {
+                    value = shiftRightBinary(labelAddress, "10");
+                }
             } else {
                 value = std::string(fieldSize, parameterName[0]);
             }
@@ -266,9 +272,21 @@ std::string Instruction::calculateParameter(std::string fieldName, std::string f
     } else if(fieldName == "shamt") {
         return std::to_string(toDecimal(fieldValue));
     } else if(fieldName == "imm") {
-        return std::to_string(fromTwoComplement(fieldValue));
+        if(this->memoryStructure->getInstructionPurpose() != INSTRUCTION_ADDRESS) {
+            return std::to_string(fromTwoComplement(fieldValue));
+        } else if(this->executionScope != nullptr && this->instructionAddress != "") {
+            std::string labelAddress = addBinary(this->instructionAddress, BranchAddr(fieldValue));
+
+            return executionScope->getLabelName(labelAddress);
+        }
     } else if(fieldName == "addr") {
-        return toHex(fieldValue, 8);
+        if(this->executionScope != nullptr && this->instructionAddress != "") {
+            std::string labelAddress = JumpAddr(this->instructionAddress, fieldValue);
+
+            return executionScope->getLabelName(labelAddress);
+        } else {
+            return toHex(fieldValue, 8);
+        }
     }
 
     return "";
@@ -377,11 +395,17 @@ std::string Instruction::getInstruction() {
         return instruction;
     } else if(this->statementType == LABEL) {
         if(this->name.size()) {
-            return getName() + ": ";
+            return getName() + ":";
+        } else if(this->executionScope != nullptr && this->instructionAddress != "") {
+            return executionScope->getLabelName(instructionAddress) + ":";
         } else {
             return "LABEL (name not assigned): ";
         }
     }
+}
+
+void Instruction::setAddress(std::string instructionAddress) {
+    this->instructionAddress = formatBinary(instructionAddress, 32);
 }
 
 /**
