@@ -56,11 +56,14 @@ enum AddressingType {
     PSEUDO_DIRECT_ADDRESSING    ///< Pseudo-Direct Addressing
 };
 
+/**
+ * Self-Explanatory Instruction Purpose
+ */
 enum InstructionPurpose {
-    INSTRUCTION_MATHS,
-    INSTRUCTION_LOGIC,
-    INSTRUCTION_ADDRESS,
-    INSTRUCTION_MOVE
+    INSTRUCTION_MATHS,          ///< Instruction that does Maths operations
+    INSTRUCTION_LOGIC,          ///< Instruction that does Logic operations
+    INSTRUCTION_ADDRESS,        ///< Instruction that does Addressing operations
+    INSTRUCTION_MOVE            ///< Instruction that moves values around Registers and Memory Locations
 };
 
 #include "memory_structure.h"
@@ -136,6 +139,9 @@ void SW_function(ExecutionScope* executionScope, std::vector<std::string> funcPa
 void SUB_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 void SUBU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
+void MUL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+void DIV_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+
 /**
  * Match the Instruction's Name with the Memory Structure (that contains structural informations about the Instruction)
  *
@@ -170,7 +176,9 @@ const std::map<std::string, MemoryStructure> instructionFormats = {
     { "sh",     MemoryStructure(I_FORMAT, INSTRUCTION_MOVE,     "101001", "",         {"rt", "imm", "rs"},    SH_function)    },
     { "sw",     MemoryStructure(I_FORMAT, INSTRUCTION_MOVE,     "101011", "",         {"rt", "imm", "rs"},    SW_function)    },
     { "sub",    MemoryStructure(R_FORMAT, INSTRUCTION_MATHS,    "000000", "100010",   {"rd", "rs", "rt"},     SUB_function)   },
-    { "subu",   MemoryStructure(R_FORMAT, INSTRUCTION_MATHS,    "000000", "100011",   {"rd", "rs", "rt"},     SUBU_function)  }
+    { "subu",   MemoryStructure(R_FORMAT, INSTRUCTION_MATHS,    "000000", "100011",   {"rd", "rs", "rt"},     SUBU_function)  },
+    { "mul",    MemoryStructure(R_FORMAT, INSTRUCTION_MATHS,    "000000", "010010",   {"rd", "rs", "rt"},     MUL_function)   },
+    { "div",    MemoryStructure(R_FORMAT, INSTRUCTION_MATHS,    "000000", "011010",   {"rd", "rs", "rt"},     DIV_function)   }
 };
 
 /**
@@ -207,7 +215,9 @@ const std::map<std::pair<std::string, std::string>, std::string> instructionPoin
     { { "101001", ""       },   "sh"    },
     { { "101011", ""       },   "sw"    },
     { { "000000", "100010" },   "sub"   },
-    { { "000000", "100011" },   "subu"  }
+    { { "000000", "100011" },   "subu"  },
+    { { "000000", "010010" },   "mul"   },
+    { { "000000", "011010" },   "div"   }
 };
 
 /**
@@ -298,4 +308,4 @@ const std::string startGP = formatBinary("10000000000001000000000000000", 32);
  */
 const std::string startSP = formatBinary("1111111111111111111111111111100", 32);
 
-#endif
+#endif // DEF_H_INCLUDED

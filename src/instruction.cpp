@@ -206,7 +206,21 @@ std::string Instruction::calculateField(std::string parameterName, std::string p
     }
 
     if(parameterValue[0] == '$') {
-        auto pos = registerFormats.find(parameterValue);
+        std::string registerValue = "";
+
+        if(!isdigit(parameterValue[1])) {
+            registerValue = parameterValue;
+        } else {
+            int registerIndex = std::stoi(parameterValue.substr(1));
+
+            if(registerIndex >= 0 && registerIndex < 32) {
+                registerValue = registerPointers[registerIndex];
+            } else {
+                std::cout << "ERROR: Register not valid!";
+            }
+        }
+
+        auto pos = registerFormats.find(registerValue);
         if(pos != registerFormats.end()) {
             std::string value = pos->second;
             binaryValue = std::string(fieldSize - value.length(), '0') + value;
@@ -404,6 +418,11 @@ std::string Instruction::getInstruction() {
     }
 }
 
+/**
+ * Set the Address of the Instruction
+ *
+ * @param instructionAddress Address of the Instruction to be setted
+ */
 void Instruction::setAddress(std::string instructionAddress) {
     this->instructionAddress = formatBinary(instructionAddress, 32);
 }

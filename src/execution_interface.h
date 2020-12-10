@@ -15,4 +15,4 @@ class ExecutionInterface {
         std::vector<std::string> instructions;
 };
 
-#endif
+#endif // EXECUTION_INTERFACE_H_INCLUDED

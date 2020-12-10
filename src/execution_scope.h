@@ -38,20 +38,15 @@ class ExecutionScope {
 
         void incPC();
         bool isFinished();
+        bool isAllocated(std::string address);
 
     private:
         std::string PC;
-        //std::string memPosition;
 
         std::map<std::string, std::string> memoryLocations;     //32-bit String (address)   -> 8-bit  String  (byte)
         std::map<std::string, std::string> listRegisters;       //5-bit  String (register)  -> 32-bit String (word)
         std::map<std::string, std::string> listLabels;          //Label  String             -> 32-bit String (word)
         std::map<std::string, std::string> pointerLabels;       //32-bit String (word)      -> Label  String
-
-        /*std::map<std::string, std::string> listRegisters;       //5-bit String  -> 32-bit String
-        std::map<std::string, std::string> memoryLocations;     //32-bit String -> 8-bit String
-        std::map<std::string, Instruction*> listInstructions;   //32-bit String -> Instruction Pointer
-        std::map<std::string, std::string> listLabels;*/          //Label Name    -> 32-bit String
 };
 
-#endif
+#endif // EXECUTION_SCOPE_H_INCLUDED

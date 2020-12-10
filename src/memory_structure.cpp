@@ -28,6 +28,11 @@ enum Format MemoryStructure::getFormat() const {
     return this->format;
 }
 
+/**
+ * Get the Purpose of the Instruction
+ *
+ * @return Purpose of the Instruction (Maths / Logic / Address / Move)
+ */
 enum InstructionPurpose MemoryStructure::getInstructionPurpose() const {
     return this->instructionPurpose;
 };

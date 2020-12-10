@@ -69,9 +69,9 @@ void ExecutionScope::printInstructions(enum InputType inputType) {
             Instruction* instructionScope = new Instruction(insValue, BINARY_VALUE, this);
             instructionScope->setAddress(insAddress);
 
-            std::cout << toHex(insAddress, 8) << ": " << instructionScope->calculateInstruction() << std::endl;
+            std::cout << toHex(insAddress, 8) << ":    " << instructionScope->calculateInstruction() << std::endl;
         } else if(inputType == BINARY_VALUE) {
-            std::cout << toHex(insAddress, 8) << ": " << insValue << std::endl;
+            std::cout << toHex(insAddress, 8) << ":    " << insValue << std::endl;
         }
 
         insAddress = addBinary(insAddress, "100");
@@ -265,6 +265,8 @@ void ExecutionScope::setPC(std::string addressingValue, enum AddressingType addr
     } else if(addressingType == PSEUDO_DIRECT_ADDRESSING) {
         /* PC = JumpAddr */
         this->PC = JumpAddr(this->PC, addressingValue);
+    } else if(addressingType == REGISTER_ADDRESSING) {
+        this->PC = formatBinary(addressingValue, 32);
     }
 }
 
@@ -276,13 +278,18 @@ void ExecutionScope::setPC(std::string addressingValue, enum AddressingType addr
  */
 std::string ExecutionScope::getByteValue(std::string byteAddress) {
     byteAddress = formatBinary(byteAddress, 32);
-    auto posLocation = memoryLocations.find(byteAddress);
 
-    if(posLocation != memoryLocations.end()) {
-        return formatBinary(posLocation->second, 8);
+    if(this->isAllocated(byteAddress)) {
+        auto posLocation = memoryLocations.find(byteAddress);
+
+        if(posLocation != memoryLocations.end()) {
+            return formatBinary(posLocation->second, 8);
+        }
     } else {
-        return "";
+        std::cout << "Byte not allocated!" << std::endl;
     }
+
+    return "";
 }
 
 /**
@@ -305,15 +312,19 @@ std::string ExecutionScope::getByteValue(std::string byteAddress, std::string by
  */
 std::string ExecutionScope::getWordValue(std::string wordAddress) {
     if(toDecimal(wordAddress) % 4 == 0) {
-        std::string firstByte = this->getByteValue(wordAddress);
-        std::string secondByte = this->getByteValue(addBinary(wordAddress, "01"));
-        std::string thirdByte = this->getByteValue(addBinary(wordAddress, "10"));
-        std::string fourthByte = this->getByteValue(addBinary(wordAddress, "11"));
+        if(this->isAllocated(wordAddress)) {
+            std::string firstByte = this->getByteValue(wordAddress);
+            std::string secondByte = this->getByteValue(addBinary(wordAddress, "01"));
+            std::string thirdByte = this->getByteValue(addBinary(wordAddress, "10"));
+            std::string fourthByte = this->getByteValue(addBinary(wordAddress, "11"));
 
-        return firstByte + secondByte + thirdByte + fourthByte;
-    } else {
-        return "";
+            return firstByte + secondByte + thirdByte + fourthByte;
+        } else {
+            std::cout << "Word not allocated!" << std::endl;
+        }
     }
+
+    return "";
 }
 
 /**
@@ -365,6 +376,12 @@ std::string ExecutionScope::getLabelAddress(std::string label) {
     }
 }
 
+/**
+ * Get the Name of the Label
+ *
+ * @param address Address of the Label Location
+ * @return Name of the Label found at the Address
+ */
 std::string ExecutionScope::getLabelName(std::string address) {
     auto posLabel = pointerLabels.find(formatBinary(address, 32));
 
@@ -406,4 +423,20 @@ bool ExecutionScope::isFinished() {
     }
 
     return true;
+}
+
+/**
+ * Retrieves whether the Memory at the Address is allocated
+ *
+ * @param address Address Value where to check
+ * @return True if the Memory Location is allocated, otherwise return False
+ */
+bool ExecutionScope::isAllocated(std::string address) {
+    int addressDecimal = toDecimal(address);
+
+    //between SP and startSP | between startPC and GP
+    return ((addressDecimal >= toDecimal(getRegisterValue("11101")) &&
+             addressDecimal <  toDecimal(startSP)) ||
+            (addressDecimal >= toDecimal(startPC) &&
+             addressDecimal <= toDecimal(getRegisterValue("11100"))));
 }

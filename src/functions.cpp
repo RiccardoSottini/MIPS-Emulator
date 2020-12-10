@@ -98,6 +98,13 @@ std::string toHex(std::string binaryValue, const int hexSize) {
     return formatHex(hexValue, hexSize);
 }
 
+/**
+ * Convert a Decimal Value into Two's Complement
+ *
+ * @param decimalValue Decimal Value to be converted
+ * @param binarySize Size of the Binary Value to be returned
+ * @return Binary Value that is the Two's Complement of the Decimal Value gave as argument
+ */
 std::string toTwoComplement(const int decimalValue, const int binarySize) {
     std::string binaryConversion = toBinary(abs(decimalValue));
     std::string binaryValue = formatBinary(binaryConversion, binarySize);
@@ -110,6 +117,12 @@ std::string toTwoComplement(const int decimalValue, const int binarySize) {
     }
 }
 
+/**
+ * Convert a Decimal Value into Two's Complement
+ *
+ * @param decimalValue Decimal Value to be converted
+ * @return Binary Value that is the Two's Complement of the Decimal Value gave as argument
+ */
 int fromTwoComplement(std::string binaryValue) {
     if(binaryValue[0] == '0') {
         return toDecimal(binaryValue);
@@ -158,6 +171,12 @@ std::string formatHex(std::string hexValue, const int hexSize) {
     return "0x" + hexValue;
 }
 
+/**
+ * Invert a Binary Value
+ *
+ * @param binaryValue Binary Value to be inverted
+ * @return Result of the reverse of the Binary Value gave as argument
+ */
 std::string invertBinary(std::string binaryValue) {
     std::string binaryResult;
 
@@ -212,6 +231,44 @@ std::string subBinary(std::string binaryA, std::string binaryB) {
     binaryB = addBinary(invertedB, "1");
 
     return addBinary(binaryA, binaryB);
+}
+
+/**
+ * MULTIPLY two Binary Values
+ *
+ * @param binaryA First Binary Value
+ * @param binaryB Second Binary Value
+ * @return Multiplication between the two Binary Values
+ */
+std::string mulBinary(std::string binaryA, std::string binaryB) {
+    std::string binaryResult = formatBinary("", 32);
+    binaryA = formatBinary(binaryA, 32);
+    binaryB = formatBinary(binaryB, 32);
+
+    for(int indexB = 31; indexB >= 0; indexB--) {
+        int b = binaryB[indexB] - 48;
+
+        if(b == 1) {
+            std::string binaryShifted = shiftLeftBinary(binaryA, toBinary(31 - indexB));
+            binaryResult = addBinary(binaryResult, binaryShifted);
+        }
+    }
+
+    return binaryResult;
+}
+
+/**
+ * DIVIDE two Binary Values
+ *
+ * @param binaryA First Binary Value
+ * @param binaryB Second Binary Value
+ * @return Division between the two Binary Values
+ */
+std::string divBinary(std::string binaryA, std::string binaryB) {
+    int decimalA = std::stoi(binaryA, nullptr, 2);
+    int decimalB = std::stoi(binaryB, nullptr, 2);
+
+    return std::bitset<32>((int)(decimalA / decimalB)).to_string();
 }
 
 /**
@@ -314,6 +371,12 @@ std::string shiftRightBinary(std::string binaryValue, std::string binaryShift) {
     return std::bitset<32>(decimalValue >> decimalShift).to_string();
 }
 
+/**
+ * Convert Immediate value into the Signed Extension
+ *
+ * @param immediate Immediate Value gave as argument
+ * @return Signed Extension of the Immediate Value
+ */
 std::string SignExtImm(std::string immediate) {
     immediate = formatBinary(immediate, 16);
     char signExt = immediate[0];
@@ -321,12 +384,24 @@ std::string SignExtImm(std::string immediate) {
     return std::string(16, signExt) + immediate;
 }
 
+/**
+ * Convert Immediate value into the Zero Extension
+ *
+ * @param immediate Immediate Value gave as argument
+ * @return Zero Extension of the Immediate Value
+ */
 std::string ZeroExtImm(std::string immediate) {
     immediate = formatBinary(immediate, 16);
 
     return std::string(16, '0') + immediate;
 }
 
+/**
+ * Calculate the Branch Address from the Immediate Value
+ *
+ * @param immediate Immediate Value gave as argument
+ * @return Branch Address calculated from the Immediate Value
+ */
 std::string BranchAddr(std::string immediate) {
     immediate = formatBinary(immediate, 16);
     char signExt = immediate[0];
@@ -334,6 +409,13 @@ std::string BranchAddr(std::string immediate) {
     return std::string(14, signExt) + immediate + std::string(2, '0');
 }
 
+/**
+ * Calculate the Jump Address from the Program Counter and the Address Value
+ *
+ * @param PC Program Counter gave as argument
+ * @param address Address Value gave as argument
+ * @return Jump Address calculated from the Program Counter and the Address Value
+ */
 std::string JumpAddr(std::string PC, std::string address) {
     address = formatBinary(address, 26);
     std::string newPC = addBinary(PC, "100");
@@ -486,7 +568,7 @@ void J_function(ExecutionScope* executionScope, std::vector<std::string> funcPar
 }
 
 /**
- * JAL Instruction -> R[31] = PC + 8; PC = JumpAddr
+ * JAL Instruction -> R[31] = PC + 4; PC = JumpAddr
  *
  * @param executionScope Execution Scope
  * @param funcParams Parameters Values (addr)
@@ -495,7 +577,7 @@ void JAL_function(ExecutionScope* executionScope, std::vector<std::string> funcP
     std::string addrValue = funcParams[0];
 
     std::string PC = executionScope->getPC();
-    std::string newPC = addBinary(PC, "1000");
+    std::string newPC = addBinary(PC, "100");
 
     executionScope->setRegisterValue("11111", newPC);
     executionScope->setPC(addrValue, PSEUDO_DIRECT_ADDRESSING);
@@ -510,7 +592,7 @@ void JAL_function(ExecutionScope* executionScope, std::vector<std::string> funcP
 void JR_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
     std::string rsValue = executionScope->getRegisterValue(funcParams[0]);
 
-    executionScope->setPC(rsValue, PSEUDO_DIRECT_ADDRESSING);
+    executionScope->setPC(rsValue, REGISTER_ADDRESSING);
 }
 
 /**
@@ -802,3 +884,36 @@ void SUBU_function(ExecutionScope* executionScope, std::vector<std::string> func
     executionScope->setRegisterValue(rdValue, resultValue);
     executionScope->incPC();
 }
+
+/**
+ * MUL Instruction -> R[rd] = R[rs] * R[rt]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
+void MUL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
+    std::string rdValue = funcParams[0];
+    std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
+    std::string rtValue = executionScope->getRegisterValue(funcParams[2]);
+    std::string resultValue = mulBinary(rsValue, rtValue);
+
+    executionScope->setRegisterValue(rdValue, resultValue);
+    executionScope->incPC();
+}
+
+/**
+ * DIV Instruction -> R[rd] = R[rs] / R[rt]
+ *
+ * @param executionScope Execution Scope
+ * @param funcParams Parameters Values (rd, rs, rt)
+ */
+void DIV_function(ExecutionScope* executionScope, std::vector<std::string> funcParams) {
+    std::string rdValue = funcParams[0];
+    std::string rsValue = executionScope->getRegisterValue(funcParams[1]);
+    std::string rtValue = executionScope->getRegisterValue(funcParams[2]);
+    std::string resultValue = divBinary(rsValue, rtValue);
+
+    executionScope->setRegisterValue(rdValue, resultValue);
+    executionScope->incPC();
+}
+

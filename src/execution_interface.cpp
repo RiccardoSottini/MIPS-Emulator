@@ -1,9 +1,15 @@
 #include "execution_interface.h"
 
+/**
+ * ExecutionInterface Constructor - initializes the Class
+ */
 ExecutionInterface::ExecutionInterface() {
     this->executionScope = nullptr;
 }
 
+/**
+ * Execute the Command Line Interface
+ */
 void ExecutionInterface::executeInterface() {
     std::string insAddress = startPC;
     std::string insValue = "";
@@ -38,6 +44,9 @@ void ExecutionInterface::executeInterface() {
     executionScope->printRegisters();
 }
 
+/**
+ * Clear the Terminal Screen
+ */
 void ExecutionInterface::clearScreen() {
     #ifdef __linux__
          std::system ("clear");
