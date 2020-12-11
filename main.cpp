@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#include "src/def.h"
+#include "src/mips_emulator.h"
 
 int main() {
     ExecutionInterface* interface = new ExecutionInterface();

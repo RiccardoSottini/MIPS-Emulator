@@ -1,4 +1,4 @@
-#include "def.h"
+#include "mips_emulator.h"
 
 /**
  * Instruction Constructor - Initializes the Instruction Object by parsing the Value passed as parameter
@@ -32,13 +32,15 @@ Instruction::Instruction(std::string value, InputType inputType, ExecutionScope*
 }
 
 /**
- * Parse the Instruction and save its Parameters
+ * Parse the Instruction (after the Instruction String is transformed into lowercase) and save its Parameters
  *
  * @param instruction Instruction to be parsed
  */
 void Instruction::parseInstruction(std::string instruction) {
     std::string currentParameter = "";
     int parameterIndex = 0;
+
+    std::transform(instruction.begin(), instruction.end(), instruction.begin(), ::tolower);
 
     for(int index = 0; index < instruction.size(); index++) {
         char currentChar = instruction[index];

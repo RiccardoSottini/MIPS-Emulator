@@ -1,7 +1,7 @@
 #ifndef MEMORY_STRUCTURE_H_INCLUDED
 #define MEMORY_STRUCTURE_H_INCLUDED
 
-#include "def.h"
+#include "mips_emulator.h"
 
 class ExecutionScope;
 

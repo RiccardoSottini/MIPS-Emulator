@@ -20,11 +20,11 @@ void ExecutionInterface::executeInterface() {
         std::cout << toHex(insAddress, 8) << ": ";
         std::getline(std::cin, insValue);
 
-        if(insValue != "q") {
+        if(insValue != "q" && insValue != "Q") {
             insAddress = addBinary(insAddress, "100");
             instructions.push_back(insValue);
         }
-    } while(insValue != "q");
+    } while(insValue != "q" && insValue != "Q");
 
     this->clearScreen();
 

@@ -71,83 +71,83 @@ enum InstructionPurpose {
 #include "execution_scope.h"
 #include "execution_interface.h"
 
-bool isNumber(std::string s);
-bool isHex(std::string hexValue);
+extern bool isNumber(std::string s);
+extern bool isHex(std::string hexValue);
 
-int toDecimal(std::string binaryValue);
-int toDecimal(std::string inputValue, enum DataFormat inputFormat);
-std::string toBinary(const int decimalValue);
-std::string toHex(std::string binaryValue);
-std::string toHex(std::string binaryValue, const int hexSize);
+extern int toDecimal(std::string binaryValue);
+extern int toDecimal(std::string inputValue, enum DataFormat inputFormat);
+extern std::string toBinary(const int decimalValue);
+extern std::string toHex(std::string binaryValue);
+extern std::string toHex(std::string binaryValue, const int hexSize);
 
-std::string toTwoComplement(const int decimalValue, const int binarySize);
-int fromTwoComplement(std::string binaryValue);
+extern std::string toTwoComplement(const int decimalValue, const int binarySize);
+extern int fromTwoComplement(std::string binaryValue);
 
-std::string formatBinary(std::string binaryValue, const int binarySize);
-std::string formatHex(std::string hexValue, const int hexSize);
+extern std::string formatBinary(std::string binaryValue, const int binarySize);
+extern std::string formatHex(std::string hexValue, const int hexSize);
 
-std::string invertBinary(std::string binaryValue);
-std::string addBinary(std::string binaryA, std::string binaryB);
-std::string andBinary(std::string binaryA, std::string binaryB);
-std::string norBinary(std::string binaryA, std::string binaryB);
-std::string orBinary(std::string binaryA, std::string binaryB);
-std::string shiftLeftBinary(std::string binaryValue, std::string binaryShift);
-std::string shiftRightBinary(std::string binaryValue, std::string binaryShift);
-std::string subBinary(std::string binaryA, std::string binaryB);
+extern std::string invertBinary(std::string binaryValue);
+extern std::string addBinary(std::string binaryA, std::string binaryB);
+extern std::string andBinary(std::string binaryA, std::string binaryB);
+extern std::string norBinary(std::string binaryA, std::string binaryB);
+extern std::string orBinary(std::string binaryA, std::string binaryB);
+extern std::string shiftLeftBinary(std::string binaryValue, std::string binaryShift);
+extern std::string shiftRightBinary(std::string binaryValue, std::string binaryShift);
+extern std::string subBinary(std::string binaryA, std::string binaryB);
 
-std::string SignExtImm(std::string immediate);
-std::string ZeroExtImm(std::string immediate);
-std::string BranchAddr(std::string immediate);
-std::string JumpAddr(std::string PC, std::string address);
+extern std::string SignExtImm(std::string immediate);
+extern std::string ZeroExtImm(std::string immediate);
+extern std::string BranchAddr(std::string immediate);
+extern std::string JumpAddr(std::string PC, std::string address);
 
-void ADD_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void ADDI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void ADDIU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void ADDU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void ADD_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void ADDI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void ADDIU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void ADDU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
-void AND_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void ANDI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void AND_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void ANDI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
-void BEQ_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void BNE_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void BEQ_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void BNE_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
-void J_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void JAL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void JR_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void J_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void JAL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void JR_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
-void LBU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void LHU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void LUI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void LW_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void LBU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void LHU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void LUI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void LW_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
-void NOR_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void OR_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void ORI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void NOR_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void OR_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void ORI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
-void SLT_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void SLTI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void SLTIU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void SLTU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SLT_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SLTI_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SLTIU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SLTU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
-void SLL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void SRL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SLL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SRL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
-void SB_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void SH_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void SW_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SB_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SH_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SW_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
-void SUB_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void SUBU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SUB_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void SUBU_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
-void MUL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
-void DIV_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void MUL_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
+extern void DIV_function(ExecutionScope* executionScope, std::vector<std::string> funcParams);
 
 /**
  * Match the Instruction's Name with the Memory Structure (that contains structural informations about the Instruction)
  *
  * @hideinitializer
  */
-const std::map<std::string, MemoryStructure> instructionFormats = {
+static const std::map<std::string, MemoryStructure> instructionFormats = {
     { "add",    MemoryStructure(R_FORMAT, INSTRUCTION_MATHS,    "000000", "100000",   {"rd", "rs", "rt"},     ADD_function)   },
     { "addi",   MemoryStructure(I_FORMAT, INSTRUCTION_MATHS,    "001000", "",         {"rt", "rs", "imm"},    ADDI_function)  },
     { "addiu",  MemoryStructure(I_FORMAT, INSTRUCTION_MATHS,    "001001", "",         {"rt", "rs", "imm"},    ADDIU_function) },
@@ -186,7 +186,7 @@ const std::map<std::string, MemoryStructure> instructionFormats = {
  *
  * @hideinitializer
  */
-const std::map<std::pair<std::string, std::string>, std::string> instructionPointers {
+static const std::map<std::pair<std::string, std::string>, std::string> instructionPointers {
     { { "000000", "100000" },   "add"   },
     { { "001000", ""       },   "addi"  },
     { { "001001", ""       },   "addiu" },
@@ -225,7 +225,7 @@ const std::map<std::pair<std::string, std::string>, std::string> instructionPoin
  *
  * @hideinitializer
  */
-const std::map<std::string, int> fieldSizes = {
+static const std::map<std::string, int> fieldSizes = {
     { "opcode", 6 },
     { "rs",     5 },
     { "rt",     5 },
@@ -241,7 +241,7 @@ const std::map<std::string, int> fieldSizes = {
  *
  * @hideinitializer
  */
-const std::map<std::string, std::string> registerFormats = {
+static const std::map<std::string, std::string> registerFormats = {
     { "$zero",  "00000" },
     { "$at",    "00001" },
     { "$v0",    "00010" },
@@ -281,7 +281,7 @@ const std::map<std::string, std::string> registerFormats = {
  *
  * @hideinitializer
  */
-const std::vector<std::string> registerPointers {
+static const std::vector<std::string> registerPointers {
     "$zero", "$at",
     "$v0", "$v1",
     "$a0", "$a1", "$a2", "$a3",
@@ -295,17 +295,17 @@ const std::vector<std::string> registerPointers {
 /**
  * Initial value of the Program Counter
  */
-const std::string startPC = formatBinary("10000000000000000000000", 32);
+static const std::string startPC = formatBinary("10000000000000000000000", 32);
 
 
 /**
  * Initial value of the Global Area Pointer Register
  */
-const std::string startGP = formatBinary("10000000000001000000000000000", 32);
+static const std::string startGP = formatBinary("10000000000001000000000000000", 32);
 
 /**
  * Initial value of the Stack Pointer Register
  */
-const std::string startSP = formatBinary("1111111111111111111111111111100", 32);
+static const std::string startSP = formatBinary("1111111111111111111111111111100", 32);
 
 #endif // DEF_H_INCLUDED
