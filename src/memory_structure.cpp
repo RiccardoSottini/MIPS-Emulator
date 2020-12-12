@@ -1,4 +1,4 @@
-#include "def.h"
+#include "../includes/mips_emulator.h"
 
 /**
  * MemoryStructure Constructor - Initializes the Memory Structure used to store an Instruction with its parameters order

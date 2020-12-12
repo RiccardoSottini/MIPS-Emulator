@@ -1,4 +1,4 @@
-#include "mips_emulator.h"
+#include "../includes/mips_emulator.h"
 
 /**
  * Instruction Constructor - Initializes the Instruction Object by parsing the Value passed as parameter
