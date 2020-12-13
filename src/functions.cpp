@@ -141,9 +141,9 @@ int fromTwoComplement(std::string binaryValue) {
  * @return The Binary Value transformed to have the Fixed Length specified by the Size parameter
  */
 std::string formatBinary(std::string binaryValue, const int binarySize) {
-    if(binarySize > (const) binaryValue.length()) {
+    if(binarySize > binaryValue.length()) {
         return std::string(binarySize - binaryValue.length(), '0') + binaryValue;
-    } else if(binarySize < (const) binaryValue.length()) {
+    } else if(binarySize < binaryValue.length()) {
         return binaryValue.erase(0, binaryValue.length() - binarySize);
     }
 
@@ -162,9 +162,9 @@ std::string formatHex(std::string hexValue, const int hexSize) {
         hexValue.erase(0, 2);
     }
 
-    if(hexSize > (const) hexValue.length()) {
+    if(hexSize > hexValue.length()) {
         return "0x" + std::string(hexSize - hexValue.length(), '0') + hexValue;
-    } else if(hexSize < (const) hexValue.length()) {
+    } else if(hexSize < hexValue.length()) {
         return "0x" + hexValue.erase(0, hexValue.length() - hexSize);
     }
 

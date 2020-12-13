@@ -12,5 +12,4 @@ add_library(mips_emulator STATIC    src/execution_interface.cpp
 
 include_directories(includes)
 
-find_library(MIPS_EMULATOR mips_emulator lib)
-target_link_libraries(mips_console LINK_PUBLIC ${MIPS_EMULATOR})
+target_link_libraries(mips_console LINK_PUBLIC mips_emulator)

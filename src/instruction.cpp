@@ -386,6 +386,8 @@ std::string Instruction::getBinary() {
     } else if(this->statementType == LABEL) {
         return std::string(32, 'x');
     }
+
+    return "";
 }
 
 /**
@@ -418,6 +420,8 @@ std::string Instruction::getInstruction() {
             return "LABEL (name not assigned): ";
         }
     }
+
+    return "";
 }
 
 /**
